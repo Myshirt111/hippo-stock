@@ -607,6 +607,7 @@
                 if(confirm('ต้องการออกจากระบบใช่หรือไม่?')) {
                     localStorage.removeItem('userRole');
                     localStorage.removeItem('currentEmpName');
+                    localStorage.removeItem('token'); // เคลียร์บัตรผ่านตอนออกจากระบบ
                     checkLoginStatus();
                 }
             } else {
@@ -686,8 +687,12 @@
                 const data = await response.json();
 
                 if (response.ok) {
+                    // --- [จุดที่แก้ไข] เพิ่มการบันทึก Token เพื่อใช้ยืนยันตัวตนหน้า Admin ---
                     localStorage.setItem('userRole', data.role);
                     localStorage.setItem('currentEmpName', data.name);
+                    localStorage.setItem('token', data.token); // <-- พระเอกของเราอยู่ตรงนี้ครับ!
+                    // -----------------------------------------------------------
+                    
                     closeModals();
                     checkLoginStatus();
                     
