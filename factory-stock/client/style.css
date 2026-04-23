@@ -1,0 +1,117 @@
+/* style.css */
+/* Global Styles */
+:root {
+    --primary-color: #003366; /* น้ำเงินเข้มModern */
+    --secondary-color: #FF8C00; /* ส้มModern */
+    --background-color: #f5f5f5; /* เทาอ่อน */
+    --card-background: #ffffff;
+    --text-color: #333333;
+    --header-red: #e60000; /* สีแดงไทวัสดุจำลอง */
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Modern Font */
+    margin: 0;
+    padding: 0;
+    background-color: var(--background-color);
+    color: var(--text-color);
+}
+
+h2 {
+    text-align: center;
+    color: var(--primary-color);
+    margin-top: 30px;
+}
+
+/* Main Header */
+.main-header {
+    background-color: #ffffff;
+    border-bottom: 2px solid var(--header-red);
+    padding: 10px 0;
+}
+
+.header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.logo {
+    font-size: 24px;
+    font-weight: bold;
+    color: var(--header-red);
+}
+
+.search-bar {
+    flex-grow: 1;
+    max-width: 600px;
+    margin: 0 20px;
+}
+
+.search-bar input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+}
+
+.user-actions {
+    display: flex;
+    gap: 15px;
+}
+
+.user-btn, .cart-btn {
+    text-decoration: none;
+    color: var(--primary-color);
+    font-weight: bold;
+}
+
+/* Work Categories */
+.category-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.category-card {
+    background-color: var(--card-background);
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    text-align: center;
+    transition: transform 0.2s;
+}
+
+.category-card:hover {
+    transform: translateY(-5px);
+}
+
+.category-card img {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+}
+
+.category-card h3 {
+    padding: 15px;
+    margin: 0;
+    font-size: 18px;
+    color: var(--primary-color);
+}
+
+/* Products Section (ตัวอย่าง) */
+.product-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}

@@ -1,0 +1,35 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Item {
+  id              Int        @id @default(autoincrement())
+  name            String     
+  description     String?    
+  quantity        Float      @default(0) 
+  unit            String     
+  imageUrl        String?    
+  expiryDate      DateTime?  
+  isTrackExpiry   Boolean    @default(false) 
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  categories      Category[] @relation("ItemToCategory")
+}
+
+model Category {
+  id    Int    @id @default(autoincrement())
+  name  String @unique 
+  items Item[] @relation("ItemToCategory")
+}
+
+model Employee {
+  empId    String @id             // รหัสพนักงาน (เป็น Primary Key)
+  name     String                 // ชื่อ-นามสกุล
+  password String                 // รหัสผ่าน
+  role     String @default("staff") // สิทธิ์ (staff หรือ admin)
+}

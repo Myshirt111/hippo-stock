@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title>ระบบเช็คสต็อก - HIPPO STOCK</title>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --blue: #003366;
+            --dark-blue: #002244;
+            --orange: #FF8C00;
+            --yellow: #FFD700;
+            --light-gray: #f8f9fa;
+            --red: #e60000;
+        }
+
+        body { 
+            font-family: 'Prompt', Tahoma, sans-serif; 
+            margin: 0; 
+            background-color: var(--light-gray); 
+            color: #333;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* --- Header --- */
+        header { 
+            background: white; 
+            padding: 10px 20px; 
+            display: flex; 
+            justify-content: center; 
+            border-bottom: 1px solid #eee;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-inner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            max-width: 1200px; 
+        }
+
+        .logo-area h1 { 
+            margin: 0; 
+            font-size: 20px; 
+            color: var(--blue); 
+            letter-spacing: 1px;
+            white-space: nowrap;
+        }
+        .logo-area span { color: var(--orange); }
+
+        .header-actions { 
+            display: flex; 
+            gap: 8px; 
+            align-items: center; 
+            justify-content: flex-end; 
+        }
+        
+        .btn-nav {
+            text-decoration: none; 
+            font-size: 12px;
+            font-weight: 600;
+            padding: 6px 12px; 
+            border-radius: 6px;
+            transition: 0.3s;
+            white-space: nowrap; 
+        }
+        .btn-login { color: var(--blue); border: 1px solid var(--blue); }
+        .btn-register { background: white; color: var(--orange); border: 1px solid var(--orange); }
+        .btn-register:hover { background: var(--orange); color: white; }
+        .btn-admin { background: var(--blue); color: white; }
+        
+        /* สไตล์ปุ่มตอนล็อกอินแล้ว (ออกจากระบบ) */
+        .btn-logout { border-color: var(--red) !important; color: var(--red) !important; }
+
+        /* --- แอนิเมชัน --- */
+        @keyframes fadeUp {
+            0% { opacity: 0; transform: translateY(30px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        
+        .header-actions .btn-nav {
+            opacity: 0; 
+            animation: fadeUp 0.8s ease-out forwards; 
+        }
+        .header-actions .btn-nav:nth-child(1) { animation-delay: 0.1s; } 
+        .header-actions .btn-nav:nth-child(2) { animation-delay: 0.2s; } 
+        .header-actions .btn-nav:nth-child(3) { animation-delay: 0.3s; } 
+        
+        .animate-fade-up {
+            opacity: 0;
+            animation: fadeUp 1s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; 
+        }
+
+        @keyframes pushFromLine {
+            0% { opacity: 0; transform: translateX(-20px); }
+            100% { opacity: 1; transform: translateX(0); }
+        }
+
+        .anim-text {
+            display: inline-block;
+            opacity: 0;
+            animation: pushFromLine 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) 0.2s forwards;
+        }
+
+        /* --- Hero Section --- */
+        .hero-section {
+            background: linear-gradient(rgba(0, 51, 102, 0.85), rgba(0, 34, 68, 0.95)), url('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');
+            background-size: cover;
+            background-position: center;
+            width: 100%;
+            height: 320px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center; 
+            color: white;
+            text-align: center;
+            padding: 0 20px;
+            box-sizing: border-box;
+        }
+
+        .hero-section h2 { font-size: 32px; margin: 0 0 10px 0; color: var(--yellow); }
+        .hero-section p { font-size: 16px; margin: 0 0 25px 0; opacity: 0.9; }
+
+        .search-container { 
+            width: 100%; 
+            max-width: 550px; 
+            margin: 0 auto; 
+        }
+
+        .search-box { 
+            width: 100%;
+            padding: 15px 25px; 
+            border-radius: 50px; 
+            border: none;
+            font-size: 16px;
+            font-family: 'Prompt', sans-serif;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+            outline: none;
+            box-sizing: border-box;
+        }
+
+        /* --- ส่วนหมวดหมู่งาน --- */
+        .section-container {
+            max-width: 1200px;
+            margin: 25px auto;
+            padding: 0 15px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--blue);
+            margin: 0 0 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 20px;
+            background: var(--orange);
+            border-radius: 10px;
+        }
+
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 12px;
+        }
+
+        .category-card {
+            background: var(--blue); 
+            border-radius: 10px;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.3s;
+            border: 2px solid transparent;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 130px; 
+            box-sizing: border-box;
+        }
+
+        .category-card:hover { background: var(--dark-blue); }
+
+        .category-card.active {
+            border-color: var(--orange);
+            background: var(--dark-blue);
+        }
+
+        .category-card img {
+            width: 100%;
+            height: 70px; 
+            object-fit: cover;
+            object-position: center;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .category-name {
+            font-size: 12px;
+            font-weight: 600;
+            line-height: 1.5; 
+            color: var(--yellow); 
+        }
+
+        .category-name-eng {
+            display: block; 
+            margin-top: 4px; 
+        }
+
+        .category-card.all-items-card {
+            justify-content: center;
+            padding: 15px;
+        }
+        .category-card.all-items-card .category-name {
+            font-size: 16px;
+        }
+
+        /* --- สไตล์สำหรับ Sub-category (หมวดหมู่ย่อย) --- */
+        .sub-category-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border-left: 4px solid var(--blue);
+        }
+
+        .sub-btn {
+            background: white;
+            color: var(--blue);
+            border: 1px solid var(--blue);
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: 0.2s;
+            font-family: 'Prompt', sans-serif;
+            font-weight: 600;
+            line-height: 1.5; 
+            display: inline-block; 
+        }
+
+        .sub-btn:hover { background: var(--light-gray); }
+        .sub-btn.active { background: var(--orange); color: white; border-color: var(--orange); }
+
+        /* --- รายการสินค้า --- */
+        .carousel-wrapper { position: relative; margin-top: 15px; }
+
+        .grid-container {
+            display: flex; 
+            overflow-x: auto; 
+            scroll-behavior: smooth;
+            gap: 15px;
+            padding: 10px 5px; 
+            scrollbar-width: none;  
+            cursor: grab; 
+            min-height: 250px;
+            align-items: flex-start;
+        }
+        .grid-container::-webkit-scrollbar { display: none; }
+
+        .grid-empty-state {
+            align-items: center;
+            justify-content: center;
+        }
+
+        .card { 
+            flex: 0 0 220px; 
+            background: var(--blue);
+            border-radius: 12px; 
+            border-bottom: 4px solid var(--orange); 
+            overflow: hidden; 
+            transition: 0.3s;
+        }
+
+        /* แก้ไข: บังคับรูปเต็มกรอบเสมอ */
+        .card-img { 
+            width: 100%; 
+            height: 150px; 
+            background: #ddd; 
+            object-fit: cover; 
+            object-position: center; 
+            display: block; 
+            pointer-events: none;
+        }
+        .card-body { padding: 15px; }
+        .card-title { margin: 0 0 8px 0; font-size: 14px; color: var(--orange); height: 40px; overflow: hidden; font-weight: 600; line-height: 1.4; }
+        
+        .stock-info { color: var(--yellow); font-size: 13px; }
+        .stock-num { font-size: 20px; font-weight: 600; color: white; margin: 0 5px; }
+
+        .scroll-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: white;
+            border: none;
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            font-size: 16px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            z-index: 10;
+            color: var(--blue);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .scroll-btn.left { left: -15px; }
+        .scroll-btn.right { right: -15px; }
+
+        /* --- สไตล์สำหรับป้ายนับถอยหลัง --- */
+        .badge-safe { background: #d4edda; color: #155724; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; display: inline-block; white-space: nowrap; margin-top: 8px;}
+        .badge-expired { background: var(--red); color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; display: inline-block; white-space: nowrap; animation: blink 1.5s infinite; margin-top: 8px;}
+        @keyframes blink { 50% { opacity: 0.6; } }
+
+        /* --- Modal Popup สำหรับ Login/Register --- */
+        .modal-overlay {
+            display: none; 
+            position: fixed; 
+            z-index: 2000; 
+            left: 0; 
+            top: 0; 
+            width: 100%; 
+            height: 100%; 
+            background-color: rgba(0,0,0,0.5); 
+            align-items: center; 
+            justify-content: center;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 350px;
+            position: relative;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            color: #aaa;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close-btn:hover { color: #333; }
+        .login-input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-family: 'Prompt', sans-serif;
+            box-sizing: border-box;
+            text-align: center;
+            font-size: 15px;
+        }
+        .btn-submit-login {
+            background: var(--blue);
+            color: white;
+            border: none;
+            padding: 12px;
+            width: 100%;
+            border-radius: 6px;
+            font-family: 'Prompt', sans-serif;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .btn-submit-login:hover { background: var(--dark-blue); }
+
+        /* --- MEDIA QUERY สำหรับมือถือ --- */
+        @media (max-width: 768px) {
+            .hero-section { 
+                height: 250px; 
+                padding: 30px 20px;
+            }
+            .hero-section h2 { font-size: 24px; }
+            .hero-section p { font-size: 12px; }
+            .search-container { max-width: 90%; } 
+            .search-box { padding: 12px 20px; font-size: 14px; }
+
+            .logo-area h1 { font-size: 19px; } 
+            .header-actions { gap: 5px; flex-wrap: nowrap; } 
+            
+            .btn-nav { 
+                padding: 6px 10px; 
+                font-size: 11px; 
+                max-width: 200px; 
+                overflow: hidden; 
+                text-overflow: ellipsis; 
+                white-space: nowrap;
+            }
+
+            .category-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 8px;
+            }
+            .category-card {
+                padding: 6px 4px;
+                min-height: 105px;
+                height: auto;  
+                box-sizing: border-box;
+            }
+            .category-card img { 
+                height: 55px; 
+                object-fit: cover;
+                margin-bottom: 8px; 
+            }
+            
+            .category-name { font-size: 9px; line-height: 1.5; }
+            .category-name-eng { margin-top: 2px; }
+            
+            .category-card.all-items-card .category-name { font-size: 11px; }
+
+            .sub-btn { font-size: 11px; padding: 4px 10px; }
+
+            .scroll-btn { display: none; } 
+            
+            /* --- แก้ไข: ปรับกล่องสินค้าให้เป็น 2 แถว แถวละ 4 กล่อง (Grid) --- */
+            .grid-container {
+                display: grid;
+                grid-template-rows: repeat(2, 1fr); /* บังคับ 2 แถว */
+                grid-auto-flow: column; /* เลื่อนแนวนอน */
+                grid-auto-columns: 23vw; /* โชว์ 4 กล่องแนวนอน (พอดีจอ) */
+                gap: 8px;
+                min-height: auto;
+                align-items: stretch;
+            }
+            
+            .card { 
+                flex: none; /* ปิด flex เดิม */
+                width: 100%; 
+                border-radius: 8px;
+            }
+            .card-img { 
+                height: 75px; /* ลดความสูงรูปให้พอดี 2 แถว */
+                width: 100%; 
+                object-fit: cover; /* บังคับเต็มกรอบ */
+            }
+            .card-body { padding: 6px; }
+            .card-title { 
+                font-size: 10px; 
+                height: 28px; 
+                line-height: 1.4; 
+                margin-bottom: 2px; 
+                /* ให้ตัวหนังสือที่ยาวเกินตัดเป็น ... */
+                display: -webkit-box;
+                -webkit-line-clamp: 2;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
+            }
+            .stock-info { font-size: 9px; }
+            .stock-num { font-size: 12px; }
+            .badge-safe, .badge-expired { font-size: 8px; padding: 2px 4px; margin-top: 4px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-inner">
+            <div class="logo-area">
+                <h1>HIPPO <span>STOCK</span></h1>
+            </div>
+            <div class="header-actions">
+                <a href="#" class="btn-nav btn-register" id="btnOpenRegister">สมัครสมาชิก</a>
+                <a href="#" class="btn-nav btn-login" id="btnOpenLogin">เข้าสู่ระบบ</a>
+                <a href="#" class="btn-nav btn-admin" id="btnGoAdmin" style="display: none;">จัดการสต็อก</a>
+            </div>
+        </div>
+    </header>
+
+    <div class="hero-section">
+        <h2>ค้นหาพัสดุและอุปกรณ์</h2>
+        <p>สามารถกดค้นหาด้วยช่องด้านล่าง</p>
+        <div class="search-container">
+            <input type="text" class="search-box" id="searchInput" placeholder="พิมพ์ชื่ออุปกรณ์ที่ต้องการ...">
+        </div>
+    </div>
+
+    <div class="section-container">
+        <h3 class="section-title"><span class="anim-text">หมวดหมู่งาน</span></h3>
+        <div class="category-grid animate-fade-up" id="categoryGrid" style="animation-delay: 0.3s;"></div>
+        
+        <div class="sub-category-container animate-fade-up" id="subCategoryContainer" style="display: none; animation-delay: 0.5s;"></div>
+    </div>
+
+    <div class="section-container" style="margin-top: 0;">
+        <h3 class="section-title"><span id="displayTitle" class="anim-text">วัสดุและอุปกรณ์ทั้งหมด</span></h3>
+        <div class="carousel-wrapper animate-fade-up" style="animation-delay: 0.7s;">
+            <button class="scroll-btn left" onclick="scrollProduct(-1)">&#10094;</button>
+            <div class="grid-container" id="productGrid">
+                <p style="padding: 20px;">กำลังโหลดข้อมูล...</p>
+            </div>
+            <button class="scroll-btn right" onclick="scrollProduct(1)">&#10095;</button>
+        </div>
+    </div>
+
+    <div id="loginModal" class="modal-overlay">
+        <div class="modal-content animate-fade-up">
+            <span class="close-btn" onclick="closeModals()">&times;</span>
+            <h3 style="color: var(--blue); margin-top: 0; margin-bottom: 5px;">เข้าสู่ระบบ</h3>
+            <p style="font-size: 13px; color: #666; margin-top: 0; margin-bottom: 15px; line-height: 1.4;">
+                กรอกรหัสพนักงานและรหัสผ่านเพื่อเข้าสู่ระบบ
+            </p>
+            <input type="text" id="loginEmpId" class="login-input" placeholder="รหัสพนักงาน (หรือ admin)">
+            <input type="password" id="loginPassword" class="login-input" placeholder="รหัสผ่าน">
+            
+            <button id="submitLogin" class="btn-submit-login">เข้าสู่ระบบ</button>
+            <p id="loginError" style="color: var(--red); font-size: 13px; display: none; margin-top: 15px; margin-bottom: 0;">รหัสพนักงานหรือรหัสผ่านไม่ถูกต้อง!</p>
+        </div>
+    </div>
+
+    <div id="registerModal" class="modal-overlay">
+        <div class="modal-content animate-fade-up">
+            <span class="close-btn" onclick="closeModals()">&times;</span>
+            <h3 style="color: var(--orange); margin-top: 0; margin-bottom: 5px;">สมัครสมาชิกพนักงาน</h3>
+            <p style="font-size: 13px; color: #666; margin-top: 0; margin-bottom: 15px; line-height: 1.4;">
+                กรอกข้อมูลให้ครบถ้วนเพื่อลงทะเบียนเข้าระบบ
+            </p>
+            <input type="text" id="regEmpId" class="login-input" placeholder="ตั้งรหัสพนักงานของคุณ">
+            <input type="text" id="regFullName" class="login-input" placeholder="ชื่อ - นามสกุลจริง">
+            <input type="password" id="regPassword" class="login-input" placeholder="ตั้งรหัสผ่าน">
+            
+            <button id="submitRegister" class="btn-submit-login" style="background-color: var(--orange);">ลงทะเบียนพนักงาน</button>
+            <p id="regError" style="color: var(--red); font-size: 13px; display: none; margin-top: 15px; margin-bottom: 0;">ข้อมูลไม่ถูกต้อง หรือรหัสนี้ถูกใช้แล้ว!</p>
+            <p id="regSuccess" style="color: green; font-size: 13px; display: none; margin-top: 15px; margin-bottom: 0;">ลงทะเบียนสำเร็จ! คุณสามารถเข้าสู่ระบบได้เลย</p>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. ตั้งค่ารหัสผ่านของ "เจ้าของ/แอดมิน" ตรงนี้ ---
+        const ADMIN_ID = 'admin';
+        const ADMIN_PASS = '123456'; 
+        // ---------------------------------------------
+
+        const btnOpenLogin = document.getElementById('btnOpenLogin');
+        const btnOpenRegister = document.getElementById('btnOpenRegister');
+        const btnGoAdmin = document.getElementById('btnGoAdmin');
+        
+        const loginModal = document.getElementById('loginModal');
+        const registerModal = document.getElementById('registerModal');
+
+        function closeModals() {
+            loginModal.style.display = 'none';
+            registerModal.style.display = 'none';
+            document.getElementById('loginEmpId').value = '';
+            document.getElementById('loginPassword').value = '';
+            document.getElementById('regEmpId').value = '';
+            document.getElementById('regFullName').value = '';
+            document.getElementById('regPassword').value = '';
+            document.getElementById('loginError').style.display = 'none';
+            document.getElementById('regError').style.display = 'none';
+            document.getElementById('regSuccess').style.display = 'none';
+        }
+
+        function checkLoginStatus() {
+            const role = localStorage.getItem('userRole');
+            const empName = localStorage.getItem('currentEmpName'); 
+            
+            if (role) {
+                btnOpenRegister.style.display = 'none';
+                if (role === 'admin') {
+                    btnOpenLogin.innerText = 'ออกจากระบบ'; 
+                    btnGoAdmin.style.display = 'inline-block';
+                } else {
+                    btnOpenLogin.innerText = `ออกจากระบบ (${empName})`; 
+                    btnGoAdmin.style.display = 'none';
+                }
+                btnOpenLogin.classList.add('btn-logout');
+            } else {
+                btnOpenLogin.innerText = 'เข้าสู่ระบบ';
+                btnOpenLogin.classList.remove('btn-logout');
+                btnOpenRegister.style.display = 'inline-block';
+                btnGoAdmin.style.display = 'none';
+            }
+        }
+
+        btnOpenRegister.addEventListener('click', (e) => {
+            e.preventDefault();
+            closeModals();
+            registerModal.style.display = 'flex';
+        });
+
+        btnOpenLogin.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (localStorage.getItem('userRole')) {
+                if(confirm('ต้องการออกจากระบบใช่หรือไม่?')) {
+                    localStorage.removeItem('userRole');
+                    localStorage.removeItem('currentEmpName');
+                    checkLoginStatus();
+                }
+            } else {
+                closeModals();
+                loginModal.style.display = 'flex';
+            }
+        });
+
+        btnGoAdmin.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (localStorage.getItem('userRole') === 'admin') {
+                window.location.href = 'admin.html'; 
+            }
+        });
+
+        document.getElementById('submitRegister').addEventListener('click', async () => {
+            const empId = document.getElementById('regEmpId').value.trim();
+            const fullName = document.getElementById('regFullName').value.trim();
+            const pass = document.getElementById('regPassword').value.trim();
+            
+            const regError = document.getElementById('regError');
+            const regSuccess = document.getElementById('regSuccess');
+
+            regError.style.display = 'none';
+            regSuccess.style.display = 'none';
+
+            if (empId === '' || fullName === '' || pass === '') {
+                regError.innerText = 'กรุณากรอกข้อมูลให้ครบถ้วน!';
+                regError.style.display = 'block';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ empId: empId, name: fullName, password: pass })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    regSuccess.style.display = 'block';
+                    document.getElementById('regEmpId').value = '';
+                    document.getElementById('regFullName').value = '';
+                    document.getElementById('regPassword').value = '';
+                } else {
+                    regError.innerText = data.error || 'เกิดข้อผิดพลาดในการลงทะเบียน';
+                    regError.style.display = 'block';
+                }
+            } catch (error) {
+                regError.innerText = 'ไม่สามารถเชื่อมต่อฐานข้อมูลได้';
+                regError.style.display = 'block';
+            }
+        });
+
+        document.getElementById('submitLogin').addEventListener('click', async () => {
+            const empId = document.getElementById('loginEmpId').value.trim();
+            const pass = document.getElementById('loginPassword').value.trim();
+            const loginError = document.getElementById('loginError');
+
+            loginError.style.display = 'none';
+
+            if (empId === '' || pass === '') {
+                loginError.innerText = 'กรุณากรอกรหัสและรหัสผ่าน!';
+                loginError.style.display = 'block';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ empId: empId, password: pass })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    localStorage.setItem('userRole', data.role);
+                    localStorage.setItem('currentEmpName', data.name);
+                    closeModals();
+                    checkLoginStatus();
+                    
+                    if (data.role === 'admin') {
+                        window.location.href = 'admin.html';
+                    } else {
+                        alert(`เข้าสู่ระบบสำเร็จ ยินดีต้อนรับคุณ ${data.name}`);
+                    }
+                } else {
+                    loginError.innerText = data.error || 'รหัสพนักงานหรือรหัสผ่านไม่ถูกต้อง!';
+                    loginError.style.display = 'block'; 
+                }
+            } catch (error) {
+                loginError.innerText = 'ไม่สามารถเชื่อมต่อฐานข้อมูลได้';
+                loginError.style.display = 'block';
+            }
+        });
+
+        checkLoginStatus();
+
+        const categories = [
+            { id: 0, nameTH: "ทั้งหมด", nameEN: "All Items", img: null, filter: "all" },
+            { id: 1, nameTH: "ติดตั้งบูธ", nameEN: "Booth Setup", img: "images/booth.png", filter: "ติดตั้งบูธ" },
+            { id: 2, nameTH: "งานเหล็ก", nameEN: "iron work", img: "images/iron.png", filter: "งานเหล็ก" },
+            { id: 3, nameTH: "งานสติ๊กเกอร์", nameEN: "Sticker", img: "images/sticker.png", filter: "งานสติ๊กเกอร์" },
+            { id: 4, nameTH: "แพคกิ้ง", nameEN: "packing", img: "images/packing.png", filter: "แพคกิ้ง" },
+            { id: 5, nameTH: "งานสี", nameEN: "Painting", img: "images/painting.png", filter: "งานสี" },
+            { id: 6, nameTH: "ขนส่ง พรบ.", nameEN: "CTP", img: "images/ctp.png", filter: "ขนส่ง พรบ." },
+            { id: 7, nameTH: "งานไม้", nameEN: "Woodworking", img: "images/wood.png", filter: "งานไม้" },
+            { id: 8, nameTH: "งานไฟฟ้า", nameEN: "Electrician", img: "images/electric.png", filter: "งานไฟฟ้า" }
+        ];
+
+        const subCategoryData = {
+            "ติดตั้งบูธ": ["เลเซอร์ระดับน้ำ", "สว่าน", "น็อต", "ตลับเมตร", "นั่งร้าน"],
+            "งานเหล็ก": ["น็อต", "เหล็กกล่อง", "เหล็กฉาก", "ใบตัด", "ตู้เชื่อม", "ลวดเชื่อม"],
+            "งานสติ๊กเกอร์": ["คัตเตอร์", "ไม้บรรทัด", "สติ๊กเกอร์ใส", "น้ำยาเช็ดกระจก", "ที่รีดสติ๊กเกอร์"],
+            "แพคกิ้ง": ["ม้วนเทป", "กล่องกระดาษ", "บับเบิ้ลกันกระแทก", "ฟิล์มยืด", "สายรัด"],
+            "งานสี": ["แปรงทาสี", "ลูกกลิ้ง", "สีน้ำ", "สีน้ำมัน", "ทินเนอร์", "เทปกาว"],
+            "ขนส่ง พรบ.": ["เอกสาร", "เชือกมัดของ", "ผ้าใบคลุมรถ", "สายรัดก๊อกแก๊ก"],
+            "งานไม้": ["เลื่อย", "น็อตเกลียวปล่อย", "กระดาษทราย", "กาวลาเท็กซ์", "สว่าน"],
+            "งานไฟฟ้า": ["หลอดไฟ", "สายไฟ", "สวิตช์", "ปลั๊ก", "เทปพันสายไฟ", "เบรกเกอร์"]
+        };
+
+        let allItems = []; 
+        let currentMainCategory = 'all';
+        let currentSubCategory = '';
+        let searchQuery = '';
+
+        const searchInputBox = document.getElementById('searchInput');
+        const placeholderTexts = [
+            "พิมพ์ชื่ออุปกรณ์ที่ต้องการ...",
+            "เช่น น็อตหกเหลี่ยม...",
+            "เช่น เลเซอร์ระดับน้ำ...",
+            "พิมพ์เพื่อค้นหาได้เลย..."
+        ];
+        let placeholderIndex = 0;
+        let charIndex = 0;
+        let isDeleting = false;
+
+        function typeWriterEffect() {
+            if (document.activeElement === searchInputBox && searchInputBox.value !== '') {
+                setTimeout(typeWriterEffect, 1000);
+                return;
+            }
+            const currentText = placeholderTexts[placeholderIndex];
+            
+            if (isDeleting) {
+                searchInputBox.setAttribute('placeholder', currentText.substring(0, charIndex));
+                charIndex--;
+                if (charIndex < 0) {
+                    isDeleting = false;
+                    placeholderIndex = (placeholderIndex + 1) % placeholderTexts.length;
+                    setTimeout(typeWriterEffect, 500);
+                } else {
+                    setTimeout(typeWriterEffect, 50);
+                }
+            } else {
+                searchInputBox.setAttribute('placeholder', currentText.substring(0, charIndex));
+                charIndex++;
+                if (charIndex > currentText.length) {
+                    isDeleting = true;
+                    setTimeout(typeWriterEffect, 2000); 
+                } else {
+                    setTimeout(typeWriterEffect, 100); 
+                }
+            }
+        }
+        typeWriterEffect();
+
+        function loadCategories() {
+            const grid = document.getElementById('categoryGrid');
+            grid.innerHTML = '';
+            categories.forEach(cat => {
+                const card = document.createElement('div');
+                card.className = `category-card ${cat.filter === 'all' ? 'active all-items-card' : ''}`;
+                card.onclick = () => filterByCategory(cat.filter, card);
+                
+                const nameHtml = `
+                    <div class="category-name">
+                        ${cat.nameTH}
+                        <span class="category-name-eng">${cat.nameEN}</span>
+                    </div>
+                `;
+                
+                if (cat.img) {
+                    card.innerHTML = `
+                        <img src="${cat.img}" onerror="this.src='https://via.placeholder.com/150?text=Work'">
+                        ${nameHtml}
+                    `;
+                } else {
+                    card.innerHTML = nameHtml;
+                }
+                grid.appendChild(card);
+            });
+        }
+
+        function filterByCategory(filterName, cardElement) {
+            document.querySelectorAll('.category-card').forEach(c => c.classList.remove('active'));
+            cardElement.classList.add('active');
+            
+            currentMainCategory = filterName;
+            currentSubCategory = ''; 
+            searchQuery = ''; 
+            document.getElementById('searchInput').value = '';
+
+            const title = document.getElementById('displayTitle');
+            title.innerText = filterName === 'all' ? "วัสดุและอุปกรณ์ทั้งหมด" : `รายการ: ${filterName}`;
+
+            title.style.animation = 'none';
+            title.offsetHeight; 
+            title.style.animation = null;
+
+            renderSubCategories(filterName);
+            applyFilters();
+        }
+
+        function renderSubCategories(mainCat) {
+            const subContainer = document.getElementById('subCategoryContainer');
+            subContainer.innerHTML = '';
+            if (mainCat === 'all' || !subCategoryData[mainCat]) {
+                subContainer.style.display = 'none';
+                return;
+            }
+            subContainer.style.display = 'flex';
+            const allBtn = document.createElement('button');
+            allBtn.className = 'sub-btn active';
+            allBtn.innerText = 'ทั้งหมดในหมวดนี้';
+            allBtn.onclick = () => {
+                document.querySelectorAll('.sub-btn').forEach(b => b.classList.remove('active'));
+                allBtn.classList.add('active');
+                currentSubCategory = '';
+                applyFilters();
+            };
+            subContainer.appendChild(allBtn);
+
+            subCategoryData[mainCat].forEach(subCat => {
+                const btn = document.createElement('button');
+                btn.className = 'sub-btn';
+                btn.innerText = subCat;
+                btn.onclick = () => {
+                    document.querySelectorAll('.sub-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentSubCategory = subCat;
+                    applyFilters();
+                };
+                subContainer.appendChild(btn);
+            });
+        }
+
+        function applyFilters() {
+            let filtered = allItems;
+            
+            if (currentMainCategory !== 'all') {
+                filtered = filtered.filter(item => 
+                    item.categories && item.categories.some(cat => cat.name === currentMainCategory)
+                );
+            }
+            
+            if (currentSubCategory !== '') {
+                filtered = filtered.filter(item => 
+                    item.categories && item.categories.some(cat => cat.name === currentSubCategory)
+                );
+            }
+            
+            if (searchQuery !== '') {
+                filtered = filtered.filter(item => 
+                    item.name && item.name.toLowerCase().includes(searchQuery)
+                );
+            }
+            
+            renderProducts(filtered);
+        }
+
+        function calculateCountdown(expiryDateStr, categories) {
+            const isCTP = categories && categories.some(cat => cat.name === 'ขนส่ง พรบ.');
+            if (!isCTP) return ''; 
+
+            if (!expiryDateStr) return ''; 
+
+            const expiryDate = new Date(expiryDateStr);
+            const today = new Date();
+            
+            today.setHours(0, 0, 0, 0);
+            expiryDate.setHours(0, 0, 0, 0);
+
+            const diffTime = expiryDate - today;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            if (diffDays < 0) {
+                return `<div style="margin-top: 4px;"><span class="badge-expired">หมดอายุแล้ว!</span></div>`;
+            } else if (diffDays === 0) {
+                return `<div style="margin-top: 4px;"><span class="badge-expired">หมดอายุวันนี้!</span></div>`;
+            } else {
+                return `<div style="margin-top: 4px;"><span class="badge-safe">เหลืออีก ${diffDays} วัน</span></div>`;
+            }
+        }
+
+        function renderProducts(items) {
+            const grid = document.getElementById('productGrid');
+            grid.innerHTML = '';
+            if(items.length === 0) {
+                grid.classList.add('grid-empty-state');
+                grid.innerHTML = '<p style="color: #666; font-size: 16px; margin: auto;">ไม่พบรายการสินค้าที่ค้นหา</p>';
+                return;
+            }
+            grid.classList.remove('grid-empty-state');
+            
+            items.forEach(item => {
+                const imageHtml = item.imageUrl 
+                    ? `<img src="${item.imageUrl}" class="card-img" draggable="false">`
+                    : `<div class="card-img" style="background:#222; display:flex; align-items:center; justify-content:center; color:white; font-size:12px;">No Image</div>`;
+                
+                const countdownHtml = calculateCountdown(item.expiryDate, item.categories);
+
+                grid.innerHTML += `
+                    <div class="card">
+                        ${imageHtml}
+                        <div class="card-body">
+                            <h3 class="card-title">${item.name}</h3>
+                            <div class="stock-info">คงเหลือ: <span class="stock-num">${item.quantity}</span>${item.unit}</div>
+                            ${countdownHtml} 
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        async function fetchItems() {
+            try {
+                const response = await fetch('/api/items');
+                allItems = await response.json();
+                renderProducts(allItems);
+            } catch (error) {
+                const grid = document.getElementById('productGrid');
+                grid.classList.add('grid-empty-state');
+                grid.innerHTML = '<p style="color:red; font-size: 14px; margin: auto;">เชื่อมต่อฐานข้อมูลไม่ได้</p>';
+            }
+        }
+
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            searchQuery = e.target.value.toLowerCase();
+            applyFilters();
+        });
+
+        function scrollProduct(direction) {
+            const container = document.getElementById('productGrid');
+            container.scrollBy({ left: direction * 240, behavior: 'smooth' });
+        }
+
+        const slider = document.getElementById('productGrid');
+        let isDown = false; let startX; let scrollLeft;
+        slider.addEventListener('mousedown', (e) => { isDown = true; startX = e.pageX - slider.offsetLeft; scrollLeft = slider.scrollLeft; });
+        slider.addEventListener('mouseleave', () => { isDown = false; });
+        slider.addEventListener('mouseup', () => { isDown = false; });
+        slider.addEventListener('mousemove', (e) => {
+            if (!isDown) return;
+            e.preventDefault();
+            const x = e.pageX - slider.offsetLeft;
+            const walk = (x - startX) * 2;
+            slider.scrollLeft = scrollLeft - walk;
+        });
+
+        loadCategories();
+        fetchItems();
+    </script>
+</body>
+</html>
