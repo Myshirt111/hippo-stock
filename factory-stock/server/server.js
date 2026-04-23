@@ -185,8 +185,9 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
-// แก้ไขให้รองรับ Express 5 โดยการตั้งชื่อ Parameter ให้กับเครื่องหมายดาว
-app.get('/:any*', (req, res) => {
+// --- วิธีแก้สำหรับ Express 5: ใช้ middleware ดักท้ายสุดแทนการใช้ app.get('*') ---
+// วิธีนี้จะไม่ใช้เครื่องหมายดาว ทำให้ระบบไม่พ่น Error เรื่อง Path ออกมาครับ
+app.use((req, res) => {
     res.sendFile(path.join(__dirname, '../client/index.html'));
 });
 
