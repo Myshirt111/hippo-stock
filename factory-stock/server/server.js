@@ -185,8 +185,8 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
-// --- [จุดที่แก้ไข] ปรับจาก '*' เป็น '/*' เพื่อรองรับ Express 5 ---
-app.get('/*', (req, res) => {
+// แก้ไขให้รองรับ Express 5 โดยการตั้งชื่อ Parameter ให้กับเครื่องหมายดาว
+app.get('/:any*', (req, res) => {
     res.sendFile(path.join(__dirname, '../client/index.html'));
 });
 
