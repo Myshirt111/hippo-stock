@@ -16,7 +16,6 @@ app.use(cors());
 app.use(express.json());
 
 // --- [จุดที่แก้ไขเพิ่มเติม] ชี้เป้าไปที่โฟลเดอร์ client เพื่อแสดงหน้าเว็บ ---
-// เนื่องจาก server.js อยู่ในโฟลเดอร์ server เราจึงต้องถอยออกไป 1 ก้าวเพื่อเข้าโฟลเดอร์ client
 app.use(express.static(path.join(__dirname, '../client')));
 
 // สร้างโฟลเดอร์ uploads อัตโนมัติถ้ายังไม่มี
@@ -186,8 +185,8 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
-// เพิ่ม API สำรองสำหรับเข้าหน้าแรก (เผื่อกรณีระบบหาไฟล์ไม่เจอ)
-app.get('*', (req, res) => {
+// --- [จุดที่แก้ไข] ปรับจาก '*' เป็น '/*' เพื่อรองรับ Express 5 ---
+app.get('/*', (req, res) => {
     res.sendFile(path.join(__dirname, '../client/index.html'));
 });
 
