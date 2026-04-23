@@ -288,7 +288,6 @@
             transition: 0.3s;
         }
 
-        /* แก้ไข: บังคับรูปเต็มกรอบเสมอ */
         .card-img { 
             width: 100%; 
             height: 150px; 
@@ -375,7 +374,7 @@
             font-size: 15px;
         }
         
-        /* --- เพิ่มสไตล์สำหรับกล่องรหัสผ่านและปุ่มลูกตา --- */
+        /* --- เพิ่มสไตล์สำหรับกล่องรหัสผ่านและไอคอน SVG --- */
         .password-container {
             position: relative;
             width: 100%;
@@ -384,15 +383,27 @@
             position: absolute;
             right: 12px;
             top: 50%;
-            transform: translateY(-75%); /* ปรับให้อยู่กึ่งกลางพอดีกับ input */
+            transform: translateY(-75%); 
             cursor: pointer;
             background: none;
             border: none;
-            font-size: 16px;
-            color: #888;
             padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        .toggle-password-btn:hover { color: #333; }
+        /* กำหนดสีและขนาดของ SVG ให้ดูโมเดิร์น */
+        .toggle-password-btn svg {
+            width: 20px;
+            height: 20px;
+            fill: none;
+            stroke: #888;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            transition: stroke 0.2s;
+        }
+        .toggle-password-btn:hover svg { stroke: #333; }
 
         .btn-submit-login {
             background: var(--blue);
@@ -404,7 +415,7 @@
             font-family: 'Prompt', sans-serif;
             font-weight: bold;
             cursor: pointer;
-            margin-top: 5px; /* เพิ่มระยะห่างนิดหน่อย */
+            margin-top: 5px; 
         }
         .btn-submit-login:hover { background: var(--dark-blue); }
 
@@ -456,26 +467,25 @@
 
             .scroll-btn { display: none; } 
             
-            /* --- แก้ไข: ปรับกล่องสินค้าให้เป็น 2 แถว แถวละ 4 กล่อง (Grid) --- */
             .grid-container {
                 display: grid;
-                grid-template-rows: repeat(2, 1fr); /* บังคับ 2 แถว */
-                grid-auto-flow: column; /* เลื่อนแนวนอน */
-                grid-auto-columns: 23vw; /* โชว์ 4 กล่องแนวนอน (พอดีจอ) */
+                grid-template-rows: repeat(2, 1fr); 
+                grid-auto-flow: column; 
+                grid-auto-columns: 23vw; 
                 gap: 8px;
                 min-height: auto;
                 align-items: stretch;
             }
             
             .card { 
-                flex: none; /* ปิด flex เดิม */
+                flex: none; 
                 width: 100%; 
                 border-radius: 8px;
             }
             .card-img { 
-                height: 75px; /* ลดความสูงรูปให้พอดี 2 แถว */
+                height: 75px; 
                 width: 100%; 
-                object-fit: cover; /* บังคับเต็มกรอบ */
+                object-fit: cover; 
             }
             .card-body { padding: 6px; }
             .card-title { 
@@ -483,7 +493,6 @@
                 height: 28px; 
                 line-height: 1.4; 
                 margin-bottom: 2px; 
-                /* ให้ตัวหนังสือที่ยาวเกินตัดเป็น ... */
                 display: -webkit-box;
                 -webkit-line-clamp: 2;
                 -webkit-box-orient: vertical;
@@ -547,7 +556,12 @@
             
             <div class="password-container">
                 <input type="password" id="loginPassword" class="login-input" placeholder="รหัสผ่าน">
-                <button type="button" class="toggle-password-btn" onclick="togglePasswordVisibility('loginPassword', this)">👁️</button>
+                <button type="button" class="toggle-password-btn" onclick="togglePasswordVisibility('loginPassword', this)">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="icon-eye">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                </button>
             </div>
             
             <button id="submitLogin" class="btn-submit-login">เข้าสู่ระบบ</button>
@@ -567,7 +581,12 @@
             
             <div class="password-container">
                 <input type="password" id="regPassword" class="login-input" placeholder="ตั้งรหัสผ่าน">
-                <button type="button" class="toggle-password-btn" onclick="togglePasswordVisibility('regPassword', this)">👁️</button>
+                <button type="button" class="toggle-password-btn" onclick="togglePasswordVisibility('regPassword', this)">
+                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="icon-eye">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                </button>
             </div>
             
             <button id="submitRegister" class="btn-submit-login" style="background-color: var(--orange);">ลงทะเบียนพนักงาน</button>
@@ -577,23 +596,25 @@
     </div>
 
     <script>
-        // --- ฟังก์ชันเสริม: สลับเปิด/ปิดรหัสผ่านด้วยปุ่มลูกตา ---
+        // โค้ด SVG ของไอคอนตาเปิดและปิด
+        const iconEyeOpen = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="icon-eye"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
+        const iconEyeClosed = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="icon-eye-off"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>`;
+
+        // --- ฟังก์ชันเสริม: สลับเปิด/ปิดรหัสผ่านด้วยไอคอน SVG ---
         function togglePasswordVisibility(inputId, btnElement) {
             const inputField = document.getElementById(inputId);
             if (inputField.type === "password") {
                 inputField.type = "text";
-                btnElement.innerText = "🙈"; // เปลี่ยนไอคอนตอนมองเห็น
+                btnElement.innerHTML = iconEyeClosed; // เปลี่ยนเป็นไอคอนตาปิด
             } else {
                 inputField.type = "password";
-                btnElement.innerText = "👁️"; // เปลี่ยนไอคอนตอนซ่อน
+                btnElement.innerHTML = iconEyeOpen; // เปลี่ยนเป็นไอคอนตาเปิด
             }
         }
         // ------------------------------------------------
 
-        // --- 1. ตั้งค่ารหัสผ่านของ "เจ้าของ/แอดมิน" ตรงนี้ ---
         const ADMIN_ID = 'admin';
         const ADMIN_PASS = '123456'; 
-        // ---------------------------------------------
 
         const btnOpenLogin = document.getElementById('btnOpenLogin');
         const btnOpenRegister = document.getElementById('btnOpenRegister');
@@ -618,7 +639,7 @@
             document.getElementById('loginPassword').type = "password";
             document.getElementById('regPassword').type = "password";
             const eyeBtns = document.querySelectorAll('.toggle-password-btn');
-            eyeBtns.forEach(btn => btn.innerText = "👁️");
+            eyeBtns.forEach(btn => btn.innerHTML = iconEyeOpen);
         }
 
         function checkLoginStatus() {
@@ -655,7 +676,7 @@
                 if(confirm('ต้องการออกจากระบบใช่หรือไม่?')) {
                     localStorage.removeItem('userRole');
                     localStorage.removeItem('currentEmpName');
-                    localStorage.removeItem('token'); // เคลียร์บัตรผ่านตอนออกจากระบบ
+                    localStorage.removeItem('token');
                     checkLoginStatus();
                 }
             } else {
@@ -735,11 +756,9 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    // --- [จุดที่แก้ไข] เพิ่มการบันทึก Token เพื่อใช้ยืนยันตัวตนหน้า Admin ---
                     localStorage.setItem('userRole', data.role);
                     localStorage.setItem('currentEmpName', data.name);
-                    localStorage.setItem('token', data.token); // <-- พระเอกของเราอยู่ตรงนี้ครับ!
-                    // -----------------------------------------------------------
+                    localStorage.setItem('token', data.token);
                     
                     closeModals();
                     checkLoginStatus();
