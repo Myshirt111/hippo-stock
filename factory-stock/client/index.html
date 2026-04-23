@@ -374,6 +374,26 @@
             text-align: center;
             font-size: 15px;
         }
+        
+        /* --- เพิ่มสไตล์สำหรับกล่องรหัสผ่านและปุ่มลูกตา --- */
+        .password-container {
+            position: relative;
+            width: 100%;
+        }
+        .toggle-password-btn {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-75%); /* ปรับให้อยู่กึ่งกลางพอดีกับ input */
+            cursor: pointer;
+            background: none;
+            border: none;
+            font-size: 16px;
+            color: #888;
+            padding: 0;
+        }
+        .toggle-password-btn:hover { color: #333; }
+
         .btn-submit-login {
             background: var(--blue);
             color: white;
@@ -384,6 +404,7 @@
             font-family: 'Prompt', sans-serif;
             font-weight: bold;
             cursor: pointer;
+            margin-top: 5px; /* เพิ่มระยะห่างนิดหน่อย */
         }
         .btn-submit-login:hover { background: var(--dark-blue); }
 
@@ -523,7 +544,11 @@
                 กรอกรหัสพนักงานและรหัสผ่านเพื่อเข้าสู่ระบบ
             </p>
             <input type="text" id="loginEmpId" class="login-input" placeholder="รหัสพนักงาน (หรือ admin)">
-            <input type="password" id="loginPassword" class="login-input" placeholder="รหัสผ่าน">
+            
+            <div class="password-container">
+                <input type="password" id="loginPassword" class="login-input" placeholder="รหัสผ่าน">
+                <button type="button" class="toggle-password-btn" onclick="togglePasswordVisibility('loginPassword', this)">👁️</button>
+            </div>
             
             <button id="submitLogin" class="btn-submit-login">เข้าสู่ระบบ</button>
             <p id="loginError" style="color: var(--red); font-size: 13px; display: none; margin-top: 15px; margin-bottom: 0;">รหัสพนักงานหรือรหัสผ่านไม่ถูกต้อง!</p>
@@ -539,7 +564,11 @@
             </p>
             <input type="text" id="regEmpId" class="login-input" placeholder="ตั้งรหัสพนักงานของคุณ">
             <input type="text" id="regFullName" class="login-input" placeholder="ชื่อ - นามสกุลจริง">
-            <input type="password" id="regPassword" class="login-input" placeholder="ตั้งรหัสผ่าน">
+            
+            <div class="password-container">
+                <input type="password" id="regPassword" class="login-input" placeholder="ตั้งรหัสผ่าน">
+                <button type="button" class="toggle-password-btn" onclick="togglePasswordVisibility('regPassword', this)">👁️</button>
+            </div>
             
             <button id="submitRegister" class="btn-submit-login" style="background-color: var(--orange);">ลงทะเบียนพนักงาน</button>
             <p id="regError" style="color: var(--red); font-size: 13px; display: none; margin-top: 15px; margin-bottom: 0;">ข้อมูลไม่ถูกต้อง หรือรหัสนี้ถูกใช้แล้ว!</p>
@@ -548,6 +577,19 @@
     </div>
 
     <script>
+        // --- ฟังก์ชันเสริม: สลับเปิด/ปิดรหัสผ่านด้วยปุ่มลูกตา ---
+        function togglePasswordVisibility(inputId, btnElement) {
+            const inputField = document.getElementById(inputId);
+            if (inputField.type === "password") {
+                inputField.type = "text";
+                btnElement.innerText = "🙈"; // เปลี่ยนไอคอนตอนมองเห็น
+            } else {
+                inputField.type = "password";
+                btnElement.innerText = "👁️"; // เปลี่ยนไอคอนตอนซ่อน
+            }
+        }
+        // ------------------------------------------------
+
         // --- 1. ตั้งค่ารหัสผ่านของ "เจ้าของ/แอดมิน" ตรงนี้ ---
         const ADMIN_ID = 'admin';
         const ADMIN_PASS = '123456'; 
@@ -571,6 +613,12 @@
             document.getElementById('loginError').style.display = 'none';
             document.getElementById('regError').style.display = 'none';
             document.getElementById('regSuccess').style.display = 'none';
+            
+            // รีเซ็ตสถานะลูกตากลับไปเป็นตอนซ่อนรหัส
+            document.getElementById('loginPassword').type = "password";
+            document.getElementById('regPassword').type = "password";
+            const eyeBtns = document.querySelectorAll('.toggle-password-btn');
+            eyeBtns.forEach(btn => btn.innerText = "👁️");
         }
 
         function checkLoginStatus() {
