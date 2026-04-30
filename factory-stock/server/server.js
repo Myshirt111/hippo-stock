@@ -229,6 +229,12 @@ app.post('/api/transactions', authenticateToken, async (req, res) => {
         const { type, quantity, itemId, projectId } = req.body;
         const empId = req.user.empId; // ดึงรหัสพนักงานจากบัตรคิว Token อัตโนมัติ
 
+        // 1. เช็คว่าผู้ใช้ (คนเบิก) ยังมีตัวตนอยู่ในระบบจริงๆ ใช่ไหม ป้องกันบั๊กเซสชันค้าง
+        const validEmployee = await prisma.employee.findUnique({ where: { empId: empId } });
+        if (!validEmployee) {
+            return res.status(401).json({ error: "ไม่พบข้อมูลพนักงานของคุณในระบบ กรุณากดออกจากระบบแล้วล็อกอินใหม่!" });
+        }
+
         // หาข้อมูลสินค้าปัจจุบันเพื่อเอาราคาต้นทุน และเช็คจำนวน
         const item = await prisma.item.findUnique({ where: { id: parseInt(itemId) } });
         if (!item) return res.status(404).json({ error: "ไม่พบสินค้า" });
@@ -238,8 +244,9 @@ app.post('/api/transactions', authenticateToken, async (req, res) => {
             return res.status(400).json({ error: `สต็อกไม่เพียงพอ! (เหลือ ${item.quantity})` });
         }
 
-        // คำนวณราคารวมของที่เบิกไป (จำนวน x ราคาต่อชิ้น)
-        const totalCost = item.price * qty;
+        // คำนวณราคารวมของที่เบิกไป (จำนวน x ราคาต่อชิ้น) และป้องกันกรณีไม่มีราคา
+        const safePrice = item.price ? parseFloat(item.price) : 0;
+        const totalCost = safePrice * qty;
 
         // คำนวณสต็อกใหม่
         const newStockQty = type === 'OUT' ? item.quantity - qty : item.quantity + qty;
@@ -264,8 +271,8 @@ app.post('/api/transactions', authenticateToken, async (req, res) => {
 
         res.json({ success: true, message: "ทำรายการสำเร็จ", transaction: result[1] });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "เกิดข้อผิดพลาดในการทำรายการ" });
+        console.error("TRANSACTION ERROR:", error);
+        res.status(500).json({ error: "ระบบขัดข้อง: " + error.message });
     }
 });
 
