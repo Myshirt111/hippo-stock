@@ -8,17 +8,21 @@ generator client {
 }
 
 model Item {
-  id              Int        @id @default(autoincrement())
-  name            String     
-  description     String?    
-  quantity        Float      @default(0) 
-  unit            String     
-  imageUrl        String?    
-  expiryDate      DateTime?  
-  isTrackExpiry   Boolean    @default(false) 
-  createdAt       DateTime   @default(now())
-  updatedAt       DateTime   @updatedAt
-  categories      Category[] @relation("ItemToCategory")
+  id            Int        @id @default(autoincrement())
+  name          String     
+  description   String?    
+  quantity      Float      @default(0) 
+  price         Float      @default(0) // <-- เพิ่มใหม่: ราคาต้นทุนต่อหน่วย
+  unit          String     
+  imageUrl      String?    
+  expiryDate    DateTime?  
+  isTrackExpiry Boolean    @default(false) 
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  categories    Category[] @relation("ItemToCategory")
+  
+  // โยงความสัมพันธ์ไปหาตารางประวัติการเบิก
+  transactions  Transaction[] 
 }
 
 model Category {
@@ -28,8 +32,45 @@ model Category {
 }
 
 model Employee {
-  empId    String @id             // รหัสพนักงาน (เป็น Primary Key)
-  name     String                 // ชื่อ-นามสกุล
-  password String                 // รหัสผ่าน
+  empId    String @id              // รหัสพนักงาน (เป็น Primary Key)
+  name     String                  // ชื่อ-นามสกุล
+  password String                  // รหัสผ่าน
   role     String @default("staff") // สิทธิ์ (staff หรือ admin)
+  
+  // โยงความสัมพันธ์ไปหาตารางประวัติการเบิก (ใครเป็นคนเบิก)
+  transactions Transaction[]
+}
+
+// ==========================================
+// --- ส่วนที่เพิ่มใหม่สำหรับระบบเบิกและคิดเงิน ---
+// ==========================================
+
+model Project {
+  id           Int           @id @default(autoincrement())
+  name         String        @unique          // ชื่องาน เช่น "บูธ Motor Show"
+  description  String?                        // รายละเอียดงาน
+  createdAt    DateTime      @default(now())
+  
+  // โยงความสัมพันธ์ว่างานนี้มีรายการเบิกอะไรบ้าง
+  transactions Transaction[] 
+}
+
+model Transaction {
+  id          Int      @id @default(autoincrement())
+  type        String   // ประเภท: "IN" (รับของเข้าสต็อก) หรือ "OUT" (เบิกของออกไปใช้)
+  quantity    Float    // จำนวนที่เบิกหรือรับเข้า
+  totalCost   Float    @default(0) // ราคารวมตอนที่เบิก (จำนวน x ราคาต้นทุน ณ เวลานั้น)
+  createdAt   DateTime @default(now()) // วันเวลาที่ทำรายการ
+  
+  // 1. โยงว่าทำรายการกับ "สินค้า" อะไร
+  itemId      Int
+  item        Item     @relation(fields: [itemId], references: [id])
+  
+  // 2. โยงว่า "ใคร" เป็นคนทำรายการ
+  empId       String
+  employee    Employee @relation(fields: [empId], references: [empId])
+  
+  // 3. โยงว่าเอาไปใช้กับ "โปรเจกต์" ไหน (ปล่อยว่างได้ ถ้ารับของเข้าสต็อกเฉยๆ)
+  projectId   Int?     
+  project     Project? @relation(fields: [projectId], references: [id])
 }

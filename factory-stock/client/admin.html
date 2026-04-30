@@ -88,7 +88,7 @@
         .btn-admin { background: var(--blue); color: white; }
         .btn-admin:hover { background: #002244; }
         
-        .container { max-width: 1000px; margin: 30px auto; padding: 0 20px; width: 100%; box-sizing: border-box; }
+        .container { max-width: 1000px; margin: 20px auto 30px; padding: 0 20px; width: 100%; box-sizing: border-box; }
         
         /* กล่อง Form และ Table */
         .card-box { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border-top: 4px solid var(--orange); margin-bottom: 30px; width: 100%; box-sizing: border-box; min-width: 0; }
@@ -97,6 +97,8 @@
         /* Form Styles */
         .form-group { margin-bottom: 20px; }
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; } 
+        /* เพิ่มใหม่: รองรับ 3 คอลัมน์สำหรับ ราคา จำนวน หน่วย */
+        .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; } 
         
         label { display: block; font-weight: 600; margin-bottom: 8px; color: var(--blue); }
         input[type="text"], input[type="number"], select, input[type="date"], input[type="file"] { 
@@ -150,6 +152,11 @@
         /* --- สไตล์สำหรับป้ายนับถอยหลัง --- */
         .badge-safe { background: #d4edda; color: #155724; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; display: inline-block; white-space: nowrap;}
         .badge-expired { background: var(--red); color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; display: inline-block; white-space: nowrap; animation: blink 1.5s infinite; }
+        
+        /* สไตล์ป้ายสำหรับรายการเบิก/รับ */
+        .badge-in { background: #d4edda; color: #155724; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+        .badge-out { background: #f8d7da; color: #721c24; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+
         @keyframes blink { 50% { opacity: 0.6; } }
 
         /* --- สไตล์สำหรับปุ่มอัปโหลดรูป (ภาษาไทย) --- */
@@ -190,6 +197,33 @@
             width: 100%;
         }
 
+        /* --- สไตล์ของ Tab Menu (เพิ่มใหม่) --- */
+        .tab-menu {
+            display: flex; gap: 10px; max-width: 1000px; margin: 20px auto 0; padding: 0 20px;
+        }
+        .tab-btn {
+            background: white; border: 1px solid #ccc; border-bottom: none; padding: 10px 20px;
+            font-family: 'Prompt', sans-serif; font-size: 16px; font-weight: bold; color: var(--blue);
+            border-radius: 8px 8px 0 0; cursor: pointer; transition: 0.3s;
+        }
+        .tab-btn.active {
+            background: var(--orange); color: white; border-color: var(--orange);
+        }
+
+        /* --- Modal Popup สำหรับ เบิก/รับ ของ (เพิ่มใหม่) --- */
+        .modal-overlay {
+            display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; 
+            background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center;
+        }
+        .modal-content {
+            background-color: white; padding: 30px; border-radius: 12px; width: 90%; max-width: 400px; 
+            position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.3); text-align: center;
+        }
+        .close-btn {
+            position: absolute; top: 10px; right: 15px; color: #aaa; font-size: 24px; font-weight: bold; cursor: pointer;
+        }
+        .close-btn:hover { color: #333; }
+
         /* --- แอนิเมชัน Fade Up --- */
         @keyframes fadeUp {
             0% { opacity: 0; transform: translateY(30px); }
@@ -207,12 +241,15 @@
             .header-actions { gap: 5px; flex-wrap: nowrap; } 
             .btn-nav { padding: 6px 10px; font-size: 11px; }
 
+            .tab-menu { margin-top: 15px; padding: 0 15px; }
+            .tab-btn { font-size: 14px; padding: 8px 12px; }
+
             .container { margin: 15px auto; padding: 0 15px; }
             .card-box { padding: 20px; margin-bottom: 20px; }
             
             .card-title { font-size: 15px !important; white-space: nowrap; }
 
-            .form-row { grid-template-columns: 1fr; gap: 15px; } 
+            .form-row, .form-row-3 { grid-template-columns: 1fr; gap: 15px; } 
             
             .checkbox-group { grid-template-columns: 1fr 1fr; gap: 10px; }
             
@@ -250,104 +287,183 @@
         </div>
     </header>
 
+    <!-- เมนู Tab (เพิ่มใหม่) -->
+    <div class="tab-menu animate-fade-up">
+        <button class="tab-btn active" id="btnTab1" onclick="switchTab('tab1')">📦 จัดการสต็อก</button>
+        <button class="tab-btn" id="btnTab2" onclick="switchTab('tab2')">📊 รายงานโปรเจกต์</button>
+    </div>
+
     <div class="container">
         
-        <div class="card-box animate-fade-up" style="animation-delay: 0.1s;">
-            <h2 class="card-title">เพิ่มอุปกรณ์ / วัสดุใหม่</h2>
-            <div id="successAlert" class="alert">บันทึกข้อมูลเรียบร้อยแล้ว!</div>
+        <!-- ============================================== -->
+        <!-- TAB 1: จัดการสต็อก (โค้ดเดิมของคุณบอย) -->
+        <!-- ============================================== -->
+        <div id="tab1">
+            <div class="card-box animate-fade-up" style="animation-delay: 0.1s;">
+                <h2 class="card-title">เพิ่มอุปกรณ์ / วัสดุใหม่</h2>
+                <div id="successAlert" class="alert">บันทึกข้อมูลเรียบร้อยแล้ว!</div>
 
-            <form id="addItemForm">
-                <div class="form-group">
-                    <label>รูปภาพสินค้า</label>
-                    <div class="custom-file-upload">
-                        <input type="file" id="imageInput" accept="image/*" style="display: none;" onchange="document.getElementById('fileNameDisplay').innerText = this.files[0] ? this.files[0].name : 'ยังไม่ได้เลือกไฟล์'">
-                        <label for="imageInput" class="btn-choose-file">เลือกไฟล์</label>
-                        <span id="fileNameDisplay" class="file-name-text">ยังไม่ได้เลือกไฟล์</span>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>ชื่ออุปกรณ์ / วัสดุ (บังคับ)</label>
-                    <input type="text" id="nameInput" required placeholder="เช่น น็อตเกลียวปล่อย, รถกระบะขนส่ง">
-                </div>
-
-                <div class="form-row">
+                <form id="addItemForm">
                     <div class="form-group">
-                        <label>จำนวน</label>
-                        <input type="number" id="qtyInput" value="0" min="0">
-                    </div>
-                    <div class="form-group">
-                        <label>หน่วยนับ</label>
-                        <select id="unitInput">
-                            <option value="ชิ้น">ชิ้น</option>
-                            <option value="ตัว">ตัว</option>
-                            <option value="ห่อ">ห่อ</option>
-                            <option value="กล่อง">กล่อง</option>
-                            <option value="ลัง">ลัง</option>
-                            <option value="คัน">คัน</option>
-                            <option value="ถุง">ถุง</option>
-                            <option value="เส้น">เส้น</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>หมวดหมู่งานหลัก (เลือกได้หลายข้อ)</label>
-                    <div class="checkbox-group">
-                        <label class="checkbox-label"><input type="checkbox" name="category" value="ติดตั้งบูธ"> ติดตั้งบูธ</label>
-                        <label class="checkbox-label"><input type="checkbox" name="category" value="งานเหล็ก"> งานเหล็ก</label>
-                        <label class="checkbox-label"><input type="checkbox" name="category" value="งานสติ๊กเกอร์"> งานสติ๊กเกอร์</label>
-                        <label class="checkbox-label"><input type="checkbox" name="category" value="แพคกิ้ง"> แพคกิ้ง</label>
-                        <label class="checkbox-label"><input type="checkbox" name="category" value="งานสี"> งานสี</label>
-                        <label class="checkbox-label"><input type="checkbox" name="category" value="ขนส่ง พรบ."> ขนส่ง พรบ.</label>
-                        <label class="checkbox-label"><input type="checkbox" name="category" value="งานไม้"> งานไม้</label>
-                        <label class="checkbox-label"><input type="checkbox" name="category" value="งานไฟฟ้า"> งานไฟฟ้า</label>
-                    </div>
-                </div>
-
-                <div class="form-group" id="subCategoryWrapper" style="display: none;">
-                    <label>แท็ก / หมวดย่อย (อิงตามหมวดหลักที่เลือกด้านบน)</label>
-                    <div class="checkbox-group sub-category-box" id="subCategoryGroup">
+                        <label>รูปภาพสินค้า</label>
+                        <div class="custom-file-upload">
+                            <input type="file" id="imageInput" accept="image/*" style="display: none;" onchange="document.getElementById('fileNameDisplay').innerText = this.files[0] ? this.files[0].name : 'ยังไม่ได้เลือกไฟล์'">
+                            <label for="imageInput" class="btn-choose-file">เลือกไฟล์</label>
+                            <span id="fileNameDisplay" class="file-name-text">ยังไม่ได้เลือกไฟล์</span>
                         </div>
-                </div>
+                    </div>
 
-                <div class="form-group">
-                    <label>วันหมดอายุ พรบ. (เฉพาะหมวดขนส่ง)</label>
-                    <input type="date" id="expiryInput">
-                </div>
+                    <div class="form-group">
+                        <label>ชื่ออุปกรณ์ / วัสดุ (บังคับ)</label>
+                        <input type="text" id="nameInput" required placeholder="เช่น น็อตเกลียวปล่อย, รถกระบะขนส่ง">
+                    </div>
 
-                <button type="submit">บันทึกข้อมูลเข้าสต็อก</button>
-            </form>
+                    <!-- แก้ไขให้เป็น form-row-3 และเพิ่มช่องรับราคาต้นทุน -->
+                    <div class="form-row-3">
+                        <div class="form-group">
+                            <label>ราคาต้นทุน (ต่อหน่วย)</label>
+                            <input type="number" id="priceInput" value="0" min="0" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label>จำนวน</label>
+                            <input type="number" id="qtyInput" value="0" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label>หน่วยนับ</label>
+                            <select id="unitInput">
+                                <option value="ชิ้น">ชิ้น</option>
+                                <option value="ตัว">ตัว</option>
+                                <option value="ห่อ">ห่อ</option>
+                                <option value="กล่อง">กล่อง</option>
+                                <option value="ลัง">ลัง</option>
+                                <option value="คัน">คัน</option>
+                                <option value="ถุง">ถุง</option>
+                                <option value="เส้น">เส้น</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>หมวดหมู่งานหลัก (เลือกได้หลายข้อ)</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-label"><input type="checkbox" name="category" value="ติดตั้งบูธ"> ติดตั้งบูธ</label>
+                            <label class="checkbox-label"><input type="checkbox" name="category" value="งานเหล็ก"> งานเหล็ก</label>
+                            <label class="checkbox-label"><input type="checkbox" name="category" value="งานสติ๊กเกอร์"> งานสติ๊กเกอร์</label>
+                            <label class="checkbox-label"><input type="checkbox" name="category" value="แพคกิ้ง"> แพคกิ้ง</label>
+                            <label class="checkbox-label"><input type="checkbox" name="category" value="งานสี"> งานสี</label>
+                            <label class="checkbox-label"><input type="checkbox" name="category" value="ขนส่ง พรบ."> ขนส่ง พรบ.</label>
+                            <label class="checkbox-label"><input type="checkbox" name="category" value="งานไม้"> งานไม้</label>
+                            <label class="checkbox-label"><input type="checkbox" name="category" value="งานไฟฟ้า"> งานไฟฟ้า</label>
+                        </div>
+                    </div>
+
+                    <div class="form-group" id="subCategoryWrapper" style="display: none;">
+                        <label>แท็ก / หมวดย่อย (อิงตามหมวดหลักที่เลือกด้านบน)</label>
+                        <div class="checkbox-group sub-category-box" id="subCategoryGroup">
+                            </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>วันหมดอายุ พรบ. (เฉพาะหมวดขนส่ง)</label>
+                        <input type="date" id="expiryInput">
+                    </div>
+
+                    <button type="submit">บันทึกข้อมูลเข้าสต็อก</button>
+                </form>
+            </div>
+
+            <div class="card-box animate-fade-up" style="animation-delay: 0.3s;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid var(--gray); padding-bottom: 10px; flex-wrap: nowrap; gap: 5px;">
+                    <h2 class="card-title" style="margin-bottom: 0; border-bottom: none; padding-bottom: 0;">รายการสินค้าในสต็อก (แก้ไข / ลบ)</h2>
+                    <button id="btnBulkDelete" class="btn-delete" style="display: none; font-size: 12px; padding: 6px 10px; white-space: nowrap;" onclick="bulkDeleteItems()">ลบที่เลือก (<span id="selectedCount">0</span>)</button>
+                </div>
+                
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 30px; text-align: center;">
+                                    <input type="checkbox" id="selectAllCheckbox" class="item-checkbox" onchange="toggleSelectAll(this)">
+                                </th>
+                                <th>รูปภาพ</th>
+                                <th>ชื่อวัสดุ/อุปกรณ์</th>
+                                <th>ทำรายการ</th> <!-- เปลี่ยนชื่อเพื่อรองรับปุ่มเบิกของ -->
+                                <th>จัดการจำนวน (แมนนวล)</th>
+                                <th>วัน/เวลาหมดอายุ</th>
+                                <th>จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminTableBody">
+                            <tr><td colspan="7" style="text-align:center;">กำลังโหลดข้อมูล...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
 
-        <div class="card-box animate-fade-up" style="animation-delay: 0.3s;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid var(--gray); padding-bottom: 10px; flex-wrap: nowrap; gap: 5px;">
-                <h2 class="card-title" style="margin-bottom: 0; border-bottom: none; padding-bottom: 0;">รายการสินค้าในสต็อก (แก้ไข / ลบ)</h2>
-                <button id="btnBulkDelete" class="btn-delete" style="display: none; font-size: 12px; padding: 6px 10px; white-space: nowrap;" onclick="bulkDeleteItems()">ลบที่เลือก (<span id="selectedCount">0</span>)</button>
+        <!-- ============================================== -->
+        <!-- TAB 2: รายงานประวัติและโปรเจกต์ (เพิ่มใหม่) -->
+        <!-- ============================================== -->
+        <div id="tab2" style="display: none;">
+            <div class="card-box animate-fade-up">
+                <h2 class="card-title">สรุปประวัติการทำรายการ และ ต้นทุนโปรเจกต์</h2>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>วัน/เวลา</th>
+                                <th>ผู้ทำรายการ</th>
+                                <th>ประเภท</th>
+                                <th>ชื่องาน / โปรเจกต์</th>
+                                <th>รายการสินค้า</th>
+                                <th>จำนวน</th>
+                                <th>มูลค่ารวม (บาท)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reportTableBody">
+                            <tr><td colspan="7" style="text-align:center;">กำลังโหลดข้อมูล...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
+        </div>
+
+    </div>
+
+    <!-- ============================================== -->
+    <!-- Modal: หน้าต่างทำรายการ (เบิก / รับของ) -->
+    <!-- ============================================== -->
+    <div id="transactionModal" class="modal-overlay">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeTransactionModal()">&times;</span>
+            <h3 style="color: var(--blue); margin-top: 0;">ทำรายการ: <span id="transItemName" style="color: var(--orange);"></span></h3>
+            <input type="hidden" id="transItemId">
             
-            <div class="table-responsive">
-                <table>
-                    <thead>
-                        <tr>
-                            <th style="width: 30px; text-align: center;">
-                                <input type="checkbox" id="selectAllCheckbox" class="item-checkbox" onchange="toggleSelectAll(this)">
-                            </th>
-                            <th>รูปภาพ</th>
-                            <th>ชื่อวัสดุ/อุปกรณ์</th>
-                            <th>จัดการจำนวน</th>
-                            <th>หน่วย</th>
-                            <th>วันหมดอายุ</th>
-                            <th>จัดการ</th>
-                        </tr>
-                    </thead>
-                    <tbody id="adminTableBody">
-                        <tr><td colspan="7" style="text-align:center;">กำลังโหลดข้อมูล...</td></tr>
-                    </tbody>
-                </table>
+            <div class="form-group" style="text-align: left;">
+                <label>ประเภทรายการ</label>
+                <select id="transType">
+                    <option value="OUT">🔴 เบิกของไปใช้ (ตัดสต็อก)</option>
+                    <option value="IN">🟢 รับของเข้า (เพิ่มสต็อก)</option>
+                </select>
             </div>
-        </div>
 
+            <div class="form-group" style="text-align: left;">
+                <label>เบิกไปใช้ในงาน / โปรเจกต์</label>
+                <div style="display: flex; gap: 5px;">
+                    <select id="transProject" style="flex: 1;">
+                        <option value="">-- ไม่ระบุงาน (เข้า/ออก คลังกลาง) --</option>
+                    </select>
+                    <button type="button" onclick="createNewProject()" style="background: var(--blue); color: white; border: none; border-radius: 4px; padding: 0 10px; cursor: pointer; font-family: 'Prompt'; font-size: 14px;">+ สร้างใหม่</button>
+                </div>
+            </div>
+
+            <div class="form-group" style="text-align: left;">
+                <label>จำนวนที่ต้องการทำรายการ</label>
+                <input type="number" id="transQty" min="1" value="1">
+            </div>
+
+            <button onclick="submitTransaction()" style="background: var(--orange); color: white; border: none; padding: 12px 20px; width: 100%; font-size: 16px; font-weight: bold; border-radius: 4px; cursor: pointer; font-family: 'Prompt', sans-serif;">ยืนยันทำรายการ</button>
+        </div>
     </div>
 
     <script>
@@ -370,6 +486,24 @@
                 }, 500); // รอให้ fade out เสร็จค่อยซ่อน
             }, 800); // หน่วงเวลาให้เห็นหน้าโหลดอย่างน้อย 0.8 วิ (ปรับช้าเร็วตรงนี้ได้)
         });
+
+        // --- ฟังก์ชันสลับ Tab (เพิ่มใหม่) ---
+        function switchTab(tabId) {
+            document.getElementById('tab1').style.display = 'none';
+            document.getElementById('tab2').style.display = 'none';
+            document.getElementById('btnTab1').classList.remove('active');
+            document.getElementById('btnTab2').classList.remove('active');
+
+            document.getElementById(tabId).style.display = 'block';
+            
+            if(tabId === 'tab1') {
+                document.getElementById('btnTab1').classList.add('active');
+                loadAdminItems();
+            } else {
+                document.getElementById('btnTab2').classList.add('active');
+                loadTransactions(); // โหลดประวัติเมื่อเปิด Tab 2
+            }
+        }
 
         // --- ฟังก์ชันคำนวณวันนับถอยหลัง ---
         function calculateCountdown(expiryDateStr, categories) {
@@ -456,6 +590,7 @@
             const formData = new FormData();
             formData.append('name', document.getElementById('nameInput').value);
             formData.append('quantity', document.getElementById('qtyInput').value);
+            formData.append('price', document.getElementById('priceInput').value); // ส่งค่า price ไปด้วย
             formData.append('unit', document.getElementById('unitInput').value);
             formData.append('categories', JSON.stringify(selectedCategories)); 
             
@@ -465,14 +600,10 @@
             const imageFile = document.getElementById('imageInput').files[0];
             if(imageFile) formData.append('image', imageFile);
 
-            const token = localStorage.getItem('token'); // ดึงบัตรผ่าน
-
             try {
                 const response = await fetch('/api/items', {
                     method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}` // ยื่นบัตรผ่าน!
-                    },
+                    headers: { 'Authorization': `Bearer ${userToken}` },
                     body: formData
                 });
 
@@ -518,6 +649,9 @@
                     const imgTag = imgSrc ? `<img src="${imgSrc}" class="item-img-preview">` : `<div class="item-img-preview" style="display:flex; align-items:center; justify-content:center; font-size:10px; color:#999;">ไม่มีรูป</div>`;
                     
                     const countdownBadge = calculateCountdown(item.expiryDate, item.categories);
+                    
+                    // แสดงราคาต้นทุนประกอบชื่อ
+                    const priceText = item.price > 0 ? `<br><small style="color: #666;">ทุน: ${item.price} บ./${item.unit}</small>` : '';
 
                     tbody.innerHTML += `
                         <tr>
@@ -525,15 +659,19 @@
                                 <input type="checkbox" class="item-checkbox single-cb" value="${item.id}" onchange="updateBulkDeleteButton()">
                             </td>
                             <td>${imgTag}</td>
-                            <td style="font-weight:600; color:var(--blue);">${item.name}</td>
+                            <td style="font-weight:600; color:var(--blue);">${item.name} ${priceText}</td>
+                            <td>
+                                <!-- ปุ่มเบิกของแบบใหม่ -->
+                                <button class="btn-qty" style="background: var(--orange); width: auto; padding: 0 10px; font-size: 14px;" onclick="openTransactionModal(${item.id}, '${item.name}')">ทำรายการเบิก/รับ</button>
+                            </td>
                             <td>
                                 <div class="action-btns">
                                     <button class="btn-qty" onclick="updateQty(${item.id}, ${item.quantity}, -1)">-</button>
                                     <input type="number" class="qty-input" value="${item.quantity}" min="0" onchange="updateQtyDirect(${item.id}, this.value)">
                                     <button class="btn-qty" onclick="updateQty(${item.id}, ${item.quantity}, 1)">+</button>
+                                    <span style="font-size: 14px;">${item.unit}</span>
                                 </div>
                             </td>
-                            <td>${item.unit}</td>
                             <td>${countdownBadge}</td>
                             <td>
                                 <button class="btn-delete" onclick="deleteItem(${item.id})">ลบ</button>
@@ -546,26 +684,19 @@
             }
         }
 
-        // --- 3. ฟังก์ชันปรับลด/เพิ่มจำนวนสต็อก ---
+        // --- 3. ฟังก์ชันปรับลด/เพิ่มจำนวนสต็อก (แบบ Manual เก่า) ---
         async function updateQty(id, currentQty, change) {
             let newQty = currentQty + change;
             if (newQty < 0) newQty = 0; 
-            const token = localStorage.getItem('token'); // ดึงบัตรผ่าน
 
             try {
                 const response = await fetch(`/api/items/${id}/stock`, {
                     method: 'PATCH',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}` // ยื่นบัตรผ่าน!
-                    },
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${userToken}` },
                     body: JSON.stringify({ quantity: newQty })
                 });
 
-                if (response.status === 401 || response.status === 403) {
-                    alert('เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่');
-                    return window.location.href = 'index.html';
-                }
+                if (response.status === 401 || response.status === 403) return window.location.href = 'index.html';
                 loadAdminItems(); 
             } catch (error) {
                 alert('เกิดข้อผิดพลาดในการอัปเดตจำนวน');
@@ -575,22 +706,15 @@
         async function updateQtyDirect(id, newValue) {
             let newQty = parseInt(newValue);
             if (isNaN(newQty) || newQty < 0) newQty = 0; 
-            const token = localStorage.getItem('token'); // ดึงบัตรผ่าน
 
             try {
                 const response = await fetch(`/api/items/${id}/stock`, {
                     method: 'PATCH',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}` // ยื่นบัตรผ่าน!
-                    },
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${userToken}` },
                     body: JSON.stringify({ quantity: newQty })
                 });
 
-                if (response.status === 401 || response.status === 403) {
-                    alert('เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่');
-                    return window.location.href = 'index.html';
-                }
+                if (response.status === 401 || response.status === 403) return window.location.href = 'index.html';
                 loadAdminItems(); 
             } catch (error) {
                 alert('เกิดข้อผิดพลาดในการอัปเดตจำนวน');
@@ -600,20 +724,14 @@
         // --- 4. ฟังก์ชันลบสินค้า (เดี่ยว) ---
         async function deleteItem(id) {
             if(!confirm("คุณต้องการลบสินค้านี้ออกจากสต็อกถาวร ใช่หรือไม่?")) return;
-            const token = localStorage.getItem('token'); // ดึงบัตรผ่าน
 
             try {
                 const response = await fetch(`/api/items/${id}`, {
                     method: 'DELETE',
-                    headers: {
-                        'Authorization': `Bearer ${token}` // ยื่นบัตรผ่าน!
-                    }
+                    headers: { 'Authorization': `Bearer ${userToken}` }
                 });
 
-                if (response.status === 401 || response.status === 403) {
-                    alert('เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่');
-                    return window.location.href = 'index.html';
-                }
+                if (response.status === 401 || response.status === 403) return window.location.href = 'index.html';
                 loadAdminItems(); 
             } catch (error) {
                 alert('เกิดข้อผิดพลาดในการลบข้อมูล');
@@ -645,17 +763,13 @@
             if (selected.length === 0) return;
             
             if(!confirm(`คุณต้องการลบสินค้าที่เลือกจำนวน ${selected.length} รายการ ใช่หรือไม่?\n(การลบนี้จะไม่สามารถกู้คืนได้)`)) return;
-
             const idsToDelete = Array.from(selected).map(cb => cb.value);
-            const token = localStorage.getItem('token'); // ดึงบัตรผ่าน
             
             try {
                 for (const id of idsToDelete) {
                     await fetch(`/api/items/${id}`, {
                         method: 'DELETE',
-                        headers: {
-                            'Authorization': `Bearer ${token}` // ยื่นบัตรผ่าน!
-                        }
+                        headers: { 'Authorization': `Bearer ${userToken}` }
                     });
                 }
                 loadAdminItems(); 
@@ -664,7 +778,132 @@
             }
         }
 
+        // ==============================================
+        // --- ฟังก์ชันส่วนที่เพิ่มใหม่: จัดการระบบ Transaction ---
+        // ==============================================
+
+        // โหลดรายชื่อโปรเจกต์มาใส่ใน Dropdown
+        async function loadProjects() {
+            try {
+                const response = await fetch('/api/projects', { headers: { 'Authorization': `Bearer ${userToken}` } });
+                const projects = await response.json();
+                const projectSelect = document.getElementById('transProject');
+                
+                // เคลียร์ตัวเลือกเก่า
+                projectSelect.innerHTML = '<option value="">-- ไม่ระบุงาน (เข้า/ออก คลังกลาง) --</option>';
+                
+                projects.forEach(p => {
+                    projectSelect.innerHTML += `<option value="${p.id}">${p.name}</option>`;
+                });
+            } catch(e) { console.error("โหลดรายชื่อโปรเจกต์ล้มเหลว"); }
+        }
+
+        // สร้างโปรเจกต์ใหม่แบบเร็วๆ
+        async function createNewProject() {
+            const projectName = prompt("กรุณากรอกชื่อโปรเจกต์หรืองานใหม่:");
+            if (!projectName) return;
+            
+            try {
+                const response = await fetch('/api/projects', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${userToken}` },
+                    body: JSON.stringify({ name: projectName })
+                });
+                
+                if(response.ok) {
+                    alert("สร้างโปรเจกต์ใหม่เรียบร้อย!");
+                    loadProjects(); // โหลดข้อมูล dropdown ใหม่
+                } else {
+                    alert("สร้างไม่สำเร็จ (ชื่ออาจซ้ำกับที่มีอยู่แล้ว)");
+                }
+            } catch(e) { alert("เชื่อมต่อฐานข้อมูลไม่ได้"); }
+        }
+
+        // เปิด Modal ทำรายการ
+        function openTransactionModal(itemId, itemName) {
+            document.getElementById('transItemId').value = itemId;
+            document.getElementById('transItemName').innerText = itemName;
+            document.getElementById('transQty').value = 1;
+            loadProjects(); // โหลดโปรเจกต์ล่าสุดมาแสดง
+            document.getElementById('transactionModal').style.display = 'flex';
+        }
+
+        function closeTransactionModal() {
+            document.getElementById('transactionModal').style.display = 'none';
+        }
+
+        // กดยืนยันเบิก/รับของ
+        async function submitTransaction() {
+            const itemId = document.getElementById('transItemId').value;
+            const type = document.getElementById('transType').value;
+            const projectId = document.getElementById('transProject').value;
+            const quantity = document.getElementById('transQty').value;
+
+            try {
+                const response = await fetch('/api/transactions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${userToken}` },
+                    body: JSON.stringify({ itemId, type, projectId, quantity })
+                });
+
+                const data = await response.json();
+                if(response.ok) {
+                    alert("บันทึกทำรายการสำเร็จ!");
+                    closeTransactionModal();
+                    loadAdminItems(); // รีโหลดตารางสต็อกหน้าแรก
+                } else {
+                    alert("ข้อผิดพลาด: " + data.error);
+                }
+            } catch(e) {
+                alert("เกิดข้อผิดพลาดขัดข้อง");
+            }
+        }
+
+        // โหลดประวัติรายการมาใส่ในตารางรายงาน (Tab 2)
+        async function loadTransactions() {
+            const tbody = document.getElementById('reportTableBody');
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">กำลังโหลดข้อมูล...</td></tr>';
+            
+            try {
+                const response = await fetch('/api/transactions', { headers: { 'Authorization': `Bearer ${userToken}` } });
+                const logs = await response.json();
+                
+                if(logs.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">ยังไม่มีประวัติการเบิกหรือรับของ</td></tr>';
+                    return;
+                }
+                
+                tbody.innerHTML = '';
+                logs.forEach(log => {
+                    const date = new Date(log.createdAt).toLocaleString('th-TH');
+                    const badge = log.type === 'OUT' ? '<span class="badge-out">🔴 เบิกออก</span>' : '<span class="badge-in">🟢 รับเข้า</span>';
+                    const projName = log.project ? log.project.name : '-';
+                    const itemName = log.item ? log.item.name : 'สินค้าถูกลบไปแล้ว';
+                    
+                    // ให้ยอดเงินของที่เบิกออกโชว์เป็นสีแดง
+                    const costColor = log.type === 'OUT' ? 'color: var(--red);' : 'color: #155724;';
+                    const costSign = log.type === 'OUT' ? '-' : '+';
+
+                    tbody.innerHTML += `
+                        <tr>
+                            <td style="font-size: 14px;">${date}</td>
+                            <td>${log.employee.name}</td>
+                            <td>${badge}</td>
+                            <td style="font-weight: bold; color: var(--blue);">${projName}</td>
+                            <td>${itemName}</td>
+                            <td style="text-align: center; font-weight: bold;">${log.quantity}</td>
+                            <td style="${costColor} font-weight: bold; text-align: right;">${costSign}${log.totalCost.toLocaleString()}</td>
+                        </tr>
+                    `;
+                });
+            } catch (error) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:red;">ไม่สามารถโหลดประวัติได้</td></tr>';
+            }
+        }
+
+        // ทำงานเริ่มต้น
         loadAdminItems();
+        loadProjects(); // แอบโหลดโปรเจกต์เตรียมไว้ก่อนเลย
     </script>
 </body>
 </html>

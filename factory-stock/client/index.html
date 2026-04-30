@@ -295,7 +295,8 @@
             object-fit: cover; 
             object-position: center; 
             display: block; 
-            pointer-events: none;
+            cursor: pointer; /* เพิ่ม: เปลี่ยนเคอร์เซอร์เป็นรูปมือเวลากดได้ */
+            pointer-events: auto; /* เพิ่ม: อนุญาตให้รับคำสั่งคลิก */
         }
         .card-body { padding: 15px; }
         .card-title { margin: 0 0 8px 0; font-size: 14px; color: var(--orange); height: 40px; overflow: hidden; font-weight: 600; line-height: 1.4; }
@@ -329,7 +330,7 @@
         .badge-expired { background: var(--red); color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; display: inline-block; white-space: nowrap; animation: blink 1.5s infinite; margin-top: 8px;}
         @keyframes blink { 50% { opacity: 0.6; } }
 
-        /* --- Modal Popup สำหรับ Login/Register --- */
+        /* --- Modal Popup พื้นฐาน --- */
         .modal-overlay {
             display: none; 
             position: fixed; 
@@ -374,7 +375,7 @@
             font-size: 15px;
         }
         
-        /* --- เพิ่มสไตล์สำหรับกล่องรหัสผ่านและไอคอน SVG --- */
+        /* --- สไตล์สำหรับกล่องรหัสผ่านและไอคอน SVG --- */
         .password-container {
             position: relative;
             width: 100%;
@@ -392,7 +393,6 @@
             align-items: center;
             justify-content: center;
         }
-        /* กำหนดสีและขนาดของ SVG ให้ดูโมเดิร์น */
         .toggle-password-btn svg {
             width: 20px;
             height: 20px;
@@ -418,6 +418,34 @@
             margin-top: 5px; 
         }
         .btn-submit-login:hover { background: var(--dark-blue); }
+
+        /* --- เพิ่มใหม่: สไตล์สำหรับ Popup ขยายรูปภาพ --- */
+        .image-modal-content {
+            background-color: transparent;
+            box-shadow: none;
+            padding: 0;
+            max-width: 90%;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .image-modal-content img {
+            max-width: 100%;
+            max-height: 80vh;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+        .image-modal-close {
+            color: white;
+            position: absolute;
+            top: -40px;
+            right: 0;
+            font-size: 35px;
+            cursor: pointer;
+            font-weight: bold;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
 
         /* --- MEDIA QUERY สำหรับมือถือ --- */
         @media (max-width: 768px) {
@@ -545,6 +573,7 @@
         </div>
     </div>
 
+    <!-- หน้าต่างเข้าสู่ระบบ -->
     <div id="loginModal" class="modal-overlay">
         <div class="modal-content animate-fade-up">
             <span class="close-btn" onclick="closeModals()">&times;</span>
@@ -569,6 +598,7 @@
         </div>
     </div>
 
+    <!-- หน้าต่างสมัครสมาชิก -->
     <div id="registerModal" class="modal-overlay">
         <div class="modal-content animate-fade-up">
             <span class="close-btn" onclick="closeModals()">&times;</span>
@@ -595,26 +625,53 @@
         </div>
     </div>
 
+    <!-- หน้าต่างเบิกของ (โผล่ตอนพนักงานกดเบิก) -->
+    <div id="transactionModal" class="modal-overlay">
+        <div class="modal-content animate-fade-up">
+            <span class="close-btn" onclick="closeModals()">&times;</span>
+            <h3 style="color: var(--blue); margin-top: 0; margin-bottom: 5px;">เบิกสินค้า</h3>
+            <p style="font-size: 15px; font-weight: bold; color: var(--orange); margin-bottom: 15px;" id="transItemName"></p>
+            
+            <input type="hidden" id="transItemId">
+
+            <div style="text-align: left; margin-bottom: 10px;">
+                <label style="font-size: 13px; color: #666; font-weight: 600;">เบิกไปใช้ในงาน / โปรเจกต์:</label>
+                <select id="transProject" class="login-input" style="text-align: left; margin-top: 5px;">
+                    <option value="">-- ไม่ระบุงาน --</option>
+                </select>
+            </div>
+
+            <div style="text-align: left; margin-bottom: 15px;">
+                <label style="font-size: 13px; color: #666; font-weight: 600;">จำนวนที่ต้องการเบิก:</label>
+                <input type="number" id="transQty" class="login-input" min="1" value="1" style="margin-top: 5px;">
+            </div>
+
+            <button onclick="submitTransaction()" class="btn-submit-login" style="background-color: var(--orange);">ยืนยันการเบิก</button>
+        </div>
+    </div>
+
+    <!-- เพิ่มใหม่: หน้าต่างขยายดูรูปภาพเต็มๆ -->
+    <div id="imageViewerModal" class="modal-overlay" onclick="closeModals()">
+        <div class="image-modal-content animate-fade-up" onclick="event.stopPropagation()">
+            <span class="image-modal-close" onclick="closeModals()">&times;</span>
+            <img id="fullSizeImage" src="" alt="Full Size Image">
+        </div>
+    </div>
+
     <script>
-        // โค้ด SVG ของไอคอนตาเปิดและปิด
         const iconEyeOpen = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="icon-eye"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
         const iconEyeClosed = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="icon-eye-off"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>`;
 
-        // --- ฟังก์ชันเสริม: สลับเปิด/ปิดรหัสผ่านด้วยไอคอน SVG ---
         function togglePasswordVisibility(inputId, btnElement) {
             const inputField = document.getElementById(inputId);
             if (inputField.type === "password") {
                 inputField.type = "text";
-                btnElement.innerHTML = iconEyeClosed; // เปลี่ยนเป็นไอคอนตาปิด
+                btnElement.innerHTML = iconEyeClosed; 
             } else {
                 inputField.type = "password";
-                btnElement.innerHTML = iconEyeOpen; // เปลี่ยนเป็นไอคอนตาเปิด
+                btnElement.innerHTML = iconEyeOpen; 
             }
         }
-        // ------------------------------------------------
-
-        const ADMIN_ID = 'admin';
-        const ADMIN_PASS = '123456'; 
 
         const btnOpenLogin = document.getElementById('btnOpenLogin');
         const btnOpenRegister = document.getElementById('btnOpenRegister');
@@ -622,10 +679,15 @@
         
         const loginModal = document.getElementById('loginModal');
         const registerModal = document.getElementById('registerModal');
+        const transactionModal = document.getElementById('transactionModal');
+        const imageViewerModal = document.getElementById('imageViewerModal'); // เพิ่มตัวแปร Modal รูปภาพ
 
         function closeModals() {
             loginModal.style.display = 'none';
             registerModal.style.display = 'none';
+            transactionModal.style.display = 'none';
+            imageViewerModal.style.display = 'none'; // สั่งปิด Modal รูปด้วย
+            
             document.getElementById('loginEmpId').value = '';
             document.getElementById('loginPassword').value = '';
             document.getElementById('regEmpId').value = '';
@@ -635,11 +697,17 @@
             document.getElementById('regError').style.display = 'none';
             document.getElementById('regSuccess').style.display = 'none';
             
-            // รีเซ็ตสถานะลูกตากลับไปเป็นตอนซ่อนรหัส
             document.getElementById('loginPassword').type = "password";
             document.getElementById('regPassword').type = "password";
             const eyeBtns = document.querySelectorAll('.toggle-password-btn');
             eyeBtns.forEach(btn => btn.innerHTML = iconEyeOpen);
+        }
+
+        // --- เพิ่มฟังก์ชันเปิดรูปภาพ ---
+        function viewFullImage(imageUrl) {
+            if(!imageUrl) return;
+            document.getElementById('fullSizeImage').src = imageUrl;
+            imageViewerModal.style.display = 'flex';
         }
 
         function checkLoginStatus() {
@@ -662,6 +730,8 @@
                 btnOpenRegister.style.display = 'inline-block';
                 btnGoAdmin.style.display = 'none';
             }
+            
+            if(allItems.length > 0) applyFilters();
         }
 
         btnOpenRegister.addEventListener('click', (e) => {
@@ -778,7 +848,56 @@
             }
         });
 
-        checkLoginStatus();
+        // ฟังก์ชันสำหรับการเบิกสต็อกของฝั่งพนักงาน
+        async function loadProjects() {
+            const token = localStorage.getItem('token');
+            if(!token) return;
+            try {
+                const response = await fetch('/api/projects', { headers: { 'Authorization': `Bearer ${token}` } });
+                const projects = await response.json();
+                const projectSelect = document.getElementById('transProject');
+                
+                projectSelect.innerHTML = '<option value="">-- ไม่ระบุงาน --</option>';
+                projects.forEach(p => {
+                    projectSelect.innerHTML += `<option value="${p.id}">${p.name}</option>`;
+                });
+            } catch(e) { console.error("โหลดรายชื่อโปรเจกต์ล้มเหลว"); }
+        }
+
+        function openTransactionModal(itemId, itemName) {
+            document.getElementById('transItemId').value = itemId;
+            document.getElementById('transItemName').innerText = itemName;
+            document.getElementById('transQty').value = 1;
+            loadProjects(); 
+            transactionModal.style.display = 'flex';
+        }
+
+        async function submitTransaction() {
+            const token = localStorage.getItem('token');
+            const itemId = document.getElementById('transItemId').value;
+            const type = 'OUT'; 
+            const projectId = document.getElementById('transProject').value;
+            const quantity = document.getElementById('transQty').value;
+
+            try {
+                const response = await fetch('/api/transactions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ itemId, type, projectId, quantity })
+                });
+
+                const data = await response.json();
+                if(response.ok) {
+                    alert("บันทึกการเบิกของสำเร็จ!");
+                    closeModals();
+                    fetchItems(); 
+                } else {
+                    alert("ข้อผิดพลาด: " + data.error);
+                }
+            } catch(e) {
+                alert("เกิดข้อผิดพลาดขัดข้อง");
+            }
+        }
 
         const categories = [
             { id: 0, nameTH: "ทั้งหมด", nameEN: "All Items", img: null, filter: "all" },
@@ -987,12 +1106,20 @@
             }
             grid.classList.remove('grid-empty-state');
             
+            const isLoggedIn = !!localStorage.getItem('token');
+            
             items.forEach(item => {
+                // เพิ่มคำสั่ง onclick="viewFullImage(...)" เข้าไปที่รูปภาพ
                 const imageHtml = item.imageUrl 
-                    ? `<img src="${item.imageUrl}" class="card-img" draggable="false">`
+                    ? `<img src="${item.imageUrl}" class="card-img" draggable="false" onclick="viewFullImage('${item.imageUrl}')">`
                     : `<div class="card-img" style="background:#222; display:flex; align-items:center; justify-content:center; color:white; font-size:12px;">No Image</div>`;
                 
                 const countdownHtml = calculateCountdown(item.expiryDate, item.categories);
+                const safeItemName = item.name.replace(/'/g, "\\'");
+                
+                const btnWithdraw = isLoggedIn 
+                    ? `<button onclick="openTransactionModal(${item.id}, '${safeItemName}')" class="btn-submit-login" style="margin-top: 12px; padding: 6px; font-size: 13px; background: var(--orange);">เบิกไปใช้งาน</button>` 
+                    : ``;
 
                 grid.innerHTML += `
                     <div class="card">
@@ -1001,6 +1128,7 @@
                             <h3 class="card-title">${item.name}</h3>
                             <div class="stock-info">คงเหลือ: <span class="stock-num">${item.quantity}</span>${item.unit}</div>
                             ${countdownHtml} 
+                            ${btnWithdraw}
                         </div>
                     </div>
                 `;
@@ -1044,6 +1172,7 @@
 
         loadCategories();
         fetchItems();
+        checkLoginStatus(); 
     </script>
 </body>
 </html>

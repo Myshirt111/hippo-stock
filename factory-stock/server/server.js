@@ -65,10 +65,10 @@ app.get('/api/items', async (req, res) => {
   res.json(items);
 });
 
-// --- ส่วนที่ 3: API สำหรับเพิ่มของใหม่เข้าสต็อก ---
+// --- ส่วนที่ 3: API สำหรับเพิ่มของใหม่เข้าสต็อก (แก้ไขเพิ่มการรับค่า price) ---
 app.post('/api/items', authenticateToken, upload.single('image'), async (req, res) => {
     try {
-        const { name, quantity, unit, categories, expiryDate } = req.body;
+        const { name, quantity, price, unit, categories, expiryDate } = req.body; // รับ price เข้ามาเพิ่ม
         const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
         
         let categoryConnectOrCreate = [];
@@ -84,6 +84,7 @@ app.post('/api/items', authenticateToken, upload.single('image'), async (req, re
             data: {
                 name: name,
                 quantity: parseFloat(quantity || 0),
+                price: parseFloat(price || 0), // บันทึกราคาต้นทุน
                 unit: unit,
                 imageUrl: imageUrl,
                 expiryDate: expiryDate ? new Date(expiryDate) : null,
@@ -160,6 +161,14 @@ app.post('/api/login', async (req, res) => {
         if (empId === ADMIN_ID && password === ADMIN_PASS) {
             userRole = 'admin';
             userName = 'ผู้ดูแลระบบ';
+            
+            // เพิ่มพิเศษ: สร้างโปรไฟล์แอดมินในฐานข้อมูลไว้ด้วย ป้องกัน Error ตอนแอดมินกดเบิกของ
+            await prisma.employee.upsert({
+                where: { empId: ADMIN_ID },
+                update: {},
+                create: { empId: ADMIN_ID, name: userName, password: 'sys-admin-pass', role: 'admin' }
+            });
+            
         } else {
             const emp = await prisma.employee.findUnique({ where: { empId } });
             if (!emp) return res.status(401).json({ error: "รหัสพนักงานหรือรหัสผ่านไม่ถูกต้อง" });
@@ -184,6 +193,100 @@ app.post('/api/login', async (req, res) => {
         res.status(500).json({ error: "เกิดข้อผิดพลาด" });
     }
 });
+
+
+// ==========================================
+// --- ส่วนที่เพิ่มใหม่: API สำหรับระบบเบิกของและโปรเจกต์ ---
+// ==========================================
+
+// API: ดึงรายชื่อโปรเจกต์ทั้งหมด
+app.get('/api/projects', authenticateToken, async (req, res) => {
+    try {
+        const projects = await prisma.project.findMany({ orderBy: { id: 'desc' } });
+        res.json(projects);
+    } catch (error) {
+        res.status(500).json({ error: "ไม่สามารถดึงข้อมูลโปรเจกต์ได้" });
+    }
+});
+
+// API: สร้างโปรเจกต์ใหม่ (ชื่องานใหม่)
+app.post('/api/projects', authenticateToken, async (req, res) => {
+    try {
+        const { name, description } = req.body;
+        const newProject = await prisma.project.create({
+            data: { name, description }
+        });
+        res.json({ success: true, project: newProject });
+    } catch (error) {
+        res.status(500).json({ error: "ไม่สามารถสร้างโปรเจกต์ได้ (ชื่ออาจซ้ำ)" });
+    }
+});
+
+// API: เบิกของ / รับของเข้า (สร้าง Transaction และอัปเดตสต็อกอัตโนมัติ)
+app.post('/api/transactions', authenticateToken, async (req, res) => {
+    try {
+        // type คือ "IN" (รับเข้า) หรือ "OUT" (เบิกออก)
+        const { type, quantity, itemId, projectId } = req.body;
+        const empId = req.user.empId; // ดึงรหัสพนักงานจากบัตรคิว Token อัตโนมัติ
+
+        // หาข้อมูลสินค้าปัจจุบันเพื่อเอาราคาต้นทุน และเช็คจำนวน
+        const item = await prisma.item.findUnique({ where: { id: parseInt(itemId) } });
+        if (!item) return res.status(404).json({ error: "ไม่พบสินค้า" });
+
+        const qty = parseFloat(quantity);
+        if (type === 'OUT' && item.quantity < qty) {
+            return res.status(400).json({ error: `สต็อกไม่เพียงพอ! (เหลือ ${item.quantity})` });
+        }
+
+        // คำนวณราคารวมของที่เบิกไป (จำนวน x ราคาต่อชิ้น)
+        const totalCost = item.price * qty;
+
+        // คำนวณสต็อกใหม่
+        const newStockQty = type === 'OUT' ? item.quantity - qty : item.quantity + qty;
+        
+        // ใช้ prisma.$transaction เพื่อสั่งให้อัปเดตสต็อกและบันทึกประวัติ "พร้อมกัน" ถ้าอันใดอันนึงพัง จะได้ยกเลิกทั้งหมด
+        const result = await prisma.$transaction([
+            prisma.item.update({
+                where: { id: item.id },
+                data: { quantity: newStockQty }
+            }),
+            prisma.transaction.create({
+                data: {
+                    type: type,
+                    quantity: qty,
+                    totalCost: totalCost,
+                    itemId: item.id,
+                    empId: empId,
+                    projectId: projectId ? parseInt(projectId) : null
+                }
+            })
+        ]);
+
+        res.json({ success: true, message: "ทำรายการสำเร็จ", transaction: result[1] });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "เกิดข้อผิดพลาดในการทำรายการ" });
+    }
+});
+
+// API: ดึงประวัติการเบิก/รับของทั้งหมด
+app.get('/api/transactions', authenticateToken, async (req, res) => {
+    try {
+        const transactions = await prisma.transaction.findMany({
+            include: { 
+                item: true,      // ขอข้อมูลรายละเอียดของชิ้นนั้นมาด้วย
+                project: true,   // ขอชื่อโปรเจกต์มาด้วย
+                employee: true   // ขอชื่อคนเบิกมาด้วย
+            },
+            orderBy: { createdAt: 'desc' } // เรียงจากล่าสุดไปเก่าสุด
+        });
+        res.json(transactions);
+    } catch (error) {
+        res.status(500).json({ error: "ไม่สามารถดึงประวัติได้" });
+    }
+});
+// ==========================================
+
 
 // --- วิธีแก้สำหรับ Express 5: ใช้ middleware ดักท้ายสุดแทนการใช้ app.get('*') ---
 // วิธีนี้จะไม่ใช้เครื่องหมายดาว ทำให้ระบบไม่พ่น Error เรื่อง Path ออกมาครับ
