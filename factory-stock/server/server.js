@@ -23,14 +23,19 @@ const SPREADSHEET_ID = '1S3hZRUApLWLmitdUaY3fYdt0CXGsjg60oKuc6QDc7Jc';
 // --- ระบบตั้งค่าการเชื่อมต่อ Google Sheets ---
 let sheets;
 try {
-    const auth = new google.auth.GoogleAuth({
-        keyFile: 'google-credentials.json', // ต้องเอาไฟล์กุญแจมาวางคู่กับ server.js นะครับ
-        scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-    });
-    sheets = google.sheets({ version: 'v4', auth });
-    console.log("✅ โหลดระบบส่ง Google Sheets พร้อมทำงาน");
+    if (process.env.GOOGLE_CREDENTIALS) {
+        const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
+        const auth = new google.auth.GoogleAuth({
+            credentials,
+            scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+        });
+        sheets = google.sheets({ version: 'v4', auth });
+        console.log("✅ โหลดกุญแจ Google จากตู้เซฟ ENV สำเร็จ ระบบพร้อมทำงาน!");
+    } else {
+        console.log("⚠️ คำเตือน: ไม่พบกุญแจ GOOGLE_CREDENTIALS ใน ENV");
+    }
 } catch (err) {
-    console.log("⚠️ คำเตือน: ไม่พบไฟล์กุญแจ google-credentials.json ระบบส่ง Sheet จะยังไม่ทำงาน");
+    console.error("⚠️ คำเตือน: ระบบเชื่อมต่อ Google Sheets มีปัญหา:", err.message);
 }
 
 app.use(cors());
