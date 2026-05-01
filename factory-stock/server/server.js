@@ -266,7 +266,7 @@ app.post('/api/projects/:id/close', authenticateToken, async (req, res) => {
     try {
         const idParam = req.params.id;
 
-        // 1. เช็คข้อมูลโปรเจกต์ (ดักจับบั๊กหาไม่เจอ รองรับทั้งแบบตัวเลขและตัวหนังสือ)
+        // 1. เช็คข้อมูลโปรเจกต์
         let project = null;
         try {
             project = await prisma.project.findUnique({ where: { id: parseInt(idParam) } });
@@ -274,14 +274,13 @@ app.post('/api/projects/:id/close', authenticateToken, async (req, res) => {
             project = await prisma.project.findUnique({ where: { id: idParam } });
         }
 
-        // ถ้ายังหาไม่เจออีก ฟ้องรหัสที่พังออกมาเลย
         if (!project) {
-            return res.status(404).json({ error: `ไม่พบโปรเจกต์นี้ในฐานข้อมูล (รหัส: ${idParam}) - ข้อมูลอาจเก่าไปแล้ว ลองกด F5 รีเฟรชหน้าเว็บ 1 รอบครับ` });
+            return res.status(404).json({ error: `ไม่พบโปรเจกต์นี้ในฐานข้อมูล (รหัส: ${idParam})` });
         }
         
         if (project.status === 'CLOSED') return res.status(400).json({ error: "งานนี้ถูกปิดไปแล้ว" });
 
-        // 2. รวมยอดเบิกออก (OUT) ของโปรเจกต์นี้ทั้งหมด
+        // 2. ดึงประวัติการเบิกออก (OUT) ของโปรเจกต์นี้ทั้งหมด
         const transactions = await prisma.transaction.findMany({
             where: { projectId: project.id, type: 'OUT' } 
         });
@@ -289,23 +288,47 @@ app.post('/api/projects/:id/close', authenticateToken, async (req, res) => {
         const totalItems = transactions.reduce((sum, t) => sum + t.quantity, 0);
         const totalCost = transactions.reduce((sum, t) => sum + t.totalCost, 0);
         
-        // แปลงเวลาให้เป็นโซนไทย
         const dateStr = new Date().toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' });
 
-        // 3. ยิงข้อมูลเข้า Google Sheet (พ่นข้อมูลลงในบรรทัดใหม่)
+        // 3. ยิงข้อมูลเข้า Google Sheet (แบบแจกแจงรายตัว)
         if (sheets && SPREADSHEET_ID) {
+            
+            // นำรายการเบิกมาจัดเรียงเป็นแถวๆ
+            const sheetValues = transactions.map(t => {
+                const unitPrice = t.quantity > 0 ? (t.totalCost / t.quantity).toFixed(2) : 0;
+                return [
+                    dateStr,             // A: วันที่
+                    project.name,        // B: โปรเจกต์
+                    t.itemName,          // C: รายการสินค้า
+                    unitPrice,           // D: ต้นทุน/หน่วย
+                    t.quantity,          // E: จำนวน
+                    t.totalCost          // F: รวมเป็นเงิน
+                ];
+            });
+
+            // เพิ่มบรรทัดสรุปยอดต่อท้ายรายการทั้งหมดของโปรเจกต์นี้
+            sheetValues.push([
+                "(สรุปยอดปิดจ็อบ)", 
+                `รวมโปรเจกต์: ${project.name}`, 
+                "", 
+                "", 
+                `รวม ${totalItems} ชิ้น`, 
+                `รวม ${totalCost} บาท`
+            ]);
+
+            // เพิ่มบรรทัดว่าง 1 บรรทัด เพื่อเว้นวรรคให้ดูง่ายเวลาปิดจ็อบงานถัดไป
+            sheetValues.push(["", "", "", "", "", ""]);
+
             await sheets.spreadsheets.values.append({
                 spreadsheetId: SPREADSHEET_ID,
-                range: 'Sheet1!A:D', // ⚠️ หมายเหตุ: แผ่นงานใน Google Sheet ต้องชื่อ "Sheet1" นะครับ ถ้าชื่อไทยให้เปลี่ยนตรงนี้ด้วย
+                range: 'Sheet1!A:F', // ขยายให้รองรับถึงคอลัมน์ F
                 valueInputOption: 'USER_ENTERED',
                 requestBody: {
-                    values: [
-                        [dateStr, project.name, totalItems, totalCost]
-                    ]
+                    values: sheetValues
                 }
             });
         } else {
-            return res.status(500).json({ error: "ยังไม่ได้ตั้งค่าคีย์ .json หรือหาไฟล์กุญแจไม่เจอครับ" });
+            return res.status(500).json({ error: "ระบบเชื่อมต่อ Google Sheet มีปัญหา หาตู้เซฟกุญแจไม่เจอครับ" });
         }
 
         // 4. เปลี่ยนสถานะในฐานข้อมูลเป็น "CLOSED"
