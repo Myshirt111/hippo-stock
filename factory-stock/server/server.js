@@ -259,16 +259,26 @@ app.post('/api/projects', authenticateToken, async (req, res) => {
 // API: ปิดโปรเจกต์ และส่งออก Google Sheet (สร้างใหม่ ✨)
 app.post('/api/projects/:id/close', authenticateToken, async (req, res) => {
     try {
-        const projectId = parseInt(req.params.id);
+        const idParam = req.params.id;
 
-        // 1. เช็คข้อมูลโปรเจกต์
-        const project = await prisma.project.findUnique({ where: { id: projectId } });
-        if (!project) return res.status(404).json({ error: "ไม่พบโปรเจกต์" });
+        // 1. เช็คข้อมูลโปรเจกต์ (ดักจับบั๊กหาไม่เจอ รองรับทั้งแบบตัวเลขและตัวหนังสือ)
+        let project = null;
+        try {
+            project = await prisma.project.findUnique({ where: { id: parseInt(idParam) } });
+        } catch (e) {
+            project = await prisma.project.findUnique({ where: { id: idParam } });
+        }
+
+        // ถ้ายังหาไม่เจออีก ฟ้องรหัสที่พังออกมาเลย
+        if (!project) {
+            return res.status(404).json({ error: `ไม่พบโปรเจกต์นี้ในฐานข้อมูล (รหัส: ${idParam}) - ข้อมูลอาจเก่าไปแล้ว ลองกด F5 รีเฟรชหน้าเว็บ 1 รอบครับ` });
+        }
+        
         if (project.status === 'CLOSED') return res.status(400).json({ error: "งานนี้ถูกปิดไปแล้ว" });
 
         // 2. รวมยอดเบิกออก (OUT) ของโปรเจกต์นี้ทั้งหมด
         const transactions = await prisma.transaction.findMany({
-            where: { projectId: projectId, type: 'OUT' }
+            where: { projectId: project.id, type: 'OUT' } 
         });
 
         const totalItems = transactions.reduce((sum, t) => sum + t.quantity, 0);
@@ -281,7 +291,7 @@ app.post('/api/projects/:id/close', authenticateToken, async (req, res) => {
         if (sheets && SPREADSHEET_ID) {
             await sheets.spreadsheets.values.append({
                 spreadsheetId: SPREADSHEET_ID,
-                range: 'Sheet1!A:D', // ถ้าระบุชื่อ Sheet อื่น ให้แก้ 'Sheet1' เป็นชื่อนั้นครับ
+                range: 'Sheet1!A:D', // ⚠️ หมายเหตุ: แผ่นงานใน Google Sheet ต้องชื่อ "Sheet1" นะครับ ถ้าชื่อไทยให้เปลี่ยนตรงนี้ด้วย
                 valueInputOption: 'USER_ENTERED',
                 requestBody: {
                     values: [
@@ -295,7 +305,7 @@ app.post('/api/projects/:id/close', authenticateToken, async (req, res) => {
 
         // 4. เปลี่ยนสถานะในฐานข้อมูลเป็น "CLOSED"
         const updatedProject = await prisma.project.update({
-            where: { id: projectId },
+            where: { id: project.id }, 
             data: { status: 'CLOSED' }
         });
 
