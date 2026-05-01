@@ -280,9 +280,10 @@ app.post('/api/projects/:id/close', authenticateToken, async (req, res) => {
         
         if (project.status === 'CLOSED') return res.status(400).json({ error: "งานนี้ถูกปิดไปแล้ว" });
 
-        // 2. ดึงประวัติการเบิกออก (OUT) ของโปรเจกต์นี้ทั้งหมด
+        // 2. ดึงประวัติการเบิกออก (OUT) ของโปรเจกต์นี้ทั้งหมด (แก้ไข: เพิ่มการดึงข้อมูล employee และ item)
         const transactions = await prisma.transaction.findMany({
-            where: { projectId: project.id, type: 'OUT' } 
+            where: { projectId: project.id, type: 'OUT' },
+            include: { employee: true, item: true } // ขอชื่อคนเบิกและชื่อสินค้ามาด้วย
         });
 
         const totalItems = transactions.reduce((sum, t) => sum + t.quantity, 0);
@@ -297,18 +298,20 @@ app.post('/api/projects/:id/close', authenticateToken, async (req, res) => {
             const sheetValues = transactions.map(t => {
                 const unitPrice = t.quantity > 0 ? (t.totalCost / t.quantity).toFixed(2) : 0;
                 return [
-                    dateStr,             // A: วันที่
-                    project.name,        // B: โปรเจกต์
-                    t.itemName,          // C: รายการสินค้า
-                    unitPrice,           // D: ต้นทุน/หน่วย
-                    t.quantity,          // E: จำนวน
-                    t.totalCost          // F: รวมเป็นเงิน
+                    dateStr,                     // A: วันที่
+                    t.employee?.name || "ไม่ระบุ", // B: ผู้ทำรายการ (ดึงจากระบบ)
+                    project.name,                // C: โปรเจกต์
+                    t.item?.name || "ไม่มีชื่อ",    // D: รายการสินค้า
+                    unitPrice,                   // E: ต้นทุน/หน่วย
+                    t.quantity,                  // F: จำนวน
+                    t.totalCost                  // G: รวมเป็นเงิน
                 ];
             });
 
-            // เพิ่มบรรทัดสรุปยอดต่อท้ายรายการทั้งหมดของโปรเจกต์นี้
+            // เพิ่มบรรทัดสรุปยอดต่อท้ายรายการทั้งหมดของโปรเจกต์นี้ (ขยับช่องให้ตรงคอลัมน์)
             sheetValues.push([
                 "(สรุปยอดปิดจ็อบ)", 
+                "",                              // เว้นว่างคอลัมน์ผู้ทำรายการ
                 `รวมโปรเจกต์: ${project.name}`, 
                 "", 
                 "", 
@@ -317,11 +320,11 @@ app.post('/api/projects/:id/close', authenticateToken, async (req, res) => {
             ]);
 
             // เพิ่มบรรทัดว่าง 1 บรรทัด เพื่อเว้นวรรคให้ดูง่ายเวลาปิดจ็อบงานถัดไป
-            sheetValues.push(["", "", "", "", "", ""]);
+            sheetValues.push(["", "", "", "", "", "", ""]);
 
             await sheets.spreadsheets.values.append({
                 spreadsheetId: SPREADSHEET_ID,
-                range: 'Sheet1!A:F', // ขยายให้รองรับถึงคอลัมน์ F
+                range: 'Sheet1!A:G', // ขยายให้รองรับถึงคอลัมน์ G
                 valueInputOption: 'USER_ENTERED',
                 requestBody: {
                     values: sheetValues
