@@ -853,7 +853,7 @@
             const token = localStorage.getItem('token');
             if(!token) return;
             try {
-                const response = await fetch('/api/projects', { headers: { 'Authorization': `Bearer ${token}` } });
+                const response = await fetch('/api/projects/active', { headers: { 'Authorization': `Bearer ${token}` } });
                 const projects = await response.json();
                 const projectSelect = document.getElementById('transProject');
                 

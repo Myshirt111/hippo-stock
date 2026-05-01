@@ -9,8 +9,29 @@ const fs = require('fs');
 const jwt = require('jsonwebtoken'); // ระบบ Token
 const bcrypt = require('bcrypt'); // ระบบเข้ารหัสผ่าน
 
+// --- เพิ่มเครื่องมือของ Google ---
+const { google } = require('googleapis'); 
+
 const prisma = new PrismaClient();
 const app = express();
+
+// ==========================================
+// รหัส Sheet ID ของคุณบอย
+const SPREADSHEET_ID = '1S3hZRUApLWLmitdUaY3fYdt0CXGsjg60oKuc6QDc7Jc'; 
+// ==========================================
+
+// --- ระบบตั้งค่าการเชื่อมต่อ Google Sheets ---
+let sheets;
+try {
+    const auth = new google.auth.GoogleAuth({
+        keyFile: 'google-credentials.json', // ต้องเอาไฟล์กุญแจมาวางคู่กับ server.js นะครับ
+        scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+    });
+    sheets = google.sheets({ version: 'v4', auth });
+    console.log("✅ โหลดระบบส่ง Google Sheets พร้อมทำงาน");
+} catch (err) {
+    console.log("⚠️ คำเตือน: ไม่พบไฟล์กุญแจ google-credentials.json ระบบส่ง Sheet จะยังไม่ทำงาน");
+}
 
 app.use(cors());
 app.use(express.json());
@@ -199,10 +220,23 @@ app.post('/api/login', async (req, res) => {
 // --- ส่วนที่เพิ่มใหม่: API สำหรับระบบเบิกของและโปรเจกต์ ---
 // ==========================================
 
-// API: ดึงรายชื่อโปรเจกต์ทั้งหมด
+// API: ดึงรายชื่อโปรเจกต์ทั้งหมด (แอดมินเห็นทั้งหมด ทั้งเปิดและปิด)
 app.get('/api/projects', authenticateToken, async (req, res) => {
     try {
         const projects = await prisma.project.findMany({ orderBy: { id: 'desc' } });
+        res.json(projects);
+    } catch (error) {
+        res.status(500).json({ error: "ไม่สามารถดึงข้อมูลโปรเจกต์ได้" });
+    }
+});
+
+// API: ดึงเฉพาะโปรเจกต์ที่สถานะ "ACTIVE" (ให้พนักงานกดเบิก)
+app.get('/api/projects/active', authenticateToken, async (req, res) => {
+    try {
+        const projects = await prisma.project.findMany({ 
+            where: { status: 'ACTIVE' },
+            orderBy: { id: 'desc' } 
+        });
         res.json(projects);
     } catch (error) {
         res.status(500).json({ error: "ไม่สามารถดึงข้อมูลโปรเจกต์ได้" });
@@ -214,11 +248,62 @@ app.post('/api/projects', authenticateToken, async (req, res) => {
     try {
         const { name, description } = req.body;
         const newProject = await prisma.project.create({
-            data: { name, description }
+            data: { name, description, status: 'ACTIVE' } // เพิ่มสถานะตอนสร้าง
         });
         res.json({ success: true, project: newProject });
     } catch (error) {
         res.status(500).json({ error: "ไม่สามารถสร้างโปรเจกต์ได้ (ชื่ออาจซ้ำ)" });
+    }
+});
+
+// API: ปิดโปรเจกต์ และส่งออก Google Sheet (สร้างใหม่ ✨)
+app.post('/api/projects/:id/close', authenticateToken, async (req, res) => {
+    try {
+        const projectId = parseInt(req.params.id);
+
+        // 1. เช็คข้อมูลโปรเจกต์
+        const project = await prisma.project.findUnique({ where: { id: projectId } });
+        if (!project) return res.status(404).json({ error: "ไม่พบโปรเจกต์" });
+        if (project.status === 'CLOSED') return res.status(400).json({ error: "งานนี้ถูกปิดไปแล้ว" });
+
+        // 2. รวมยอดเบิกออก (OUT) ของโปรเจกต์นี้ทั้งหมด
+        const transactions = await prisma.transaction.findMany({
+            where: { projectId: projectId, type: 'OUT' }
+        });
+
+        const totalItems = transactions.reduce((sum, t) => sum + t.quantity, 0);
+        const totalCost = transactions.reduce((sum, t) => sum + t.totalCost, 0);
+        
+        // แปลงเวลาให้เป็นโซนไทย
+        const dateStr = new Date().toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' });
+
+        // 3. ยิงข้อมูลเข้า Google Sheet (พ่นข้อมูลลงในบรรทัดใหม่)
+        if (sheets && SPREADSHEET_ID) {
+            await sheets.spreadsheets.values.append({
+                spreadsheetId: SPREADSHEET_ID,
+                range: 'Sheet1!A:D', // ถ้าระบุชื่อ Sheet อื่น ให้แก้ 'Sheet1' เป็นชื่อนั้นครับ
+                valueInputOption: 'USER_ENTERED',
+                requestBody: {
+                    values: [
+                        [dateStr, project.name, totalItems, totalCost]
+                    ]
+                }
+            });
+        } else {
+            return res.status(500).json({ error: "ยังไม่ได้ตั้งค่าคีย์ .json หรือหาไฟล์กุญแจไม่เจอครับ" });
+        }
+
+        // 4. เปลี่ยนสถานะในฐานข้อมูลเป็น "CLOSED"
+        const updatedProject = await prisma.project.update({
+            where: { id: projectId },
+            data: { status: 'CLOSED' }
+        });
+
+        res.json({ success: true, message: "ปิดจ็อบและส่งข้อมูลเข้า Google Sheet สำเร็จ!", project: updatedProject });
+
+    } catch (error) {
+        console.error("SHEET ERROR:", error);
+        res.status(500).json({ error: "ระบบขัดข้อง: " + error.message });
     }
 });
 

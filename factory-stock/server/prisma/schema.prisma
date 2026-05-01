@@ -49,6 +49,7 @@ model Project {
   id           Int           @id @default(autoincrement())
   name         String        @unique          // ชื่องาน เช่น "บูธ Motor Show"
   description  String?                        // รายละเอียดงาน
+  status      String        @default("ACTIVE")
   createdAt    DateTime      @default(now())
   
   // โยงความสัมพันธ์ว่างานนี้มีรายการเบิกอะไรบ้าง

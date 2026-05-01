@@ -35,8 +35,8 @@
         .spinner {
             width: 50px;
             height: 50px;
-            border: 5px solid rgba(255, 140, 0, 0.2); 
-            border-top: 5px solid var(--orange); 
+            border: 5px solid rgba(255, 140, 0, 0.2); /* สีส้มอ่อน */
+            border-top: 5px solid var(--orange); /* สีส้มเข้ม */
             border-radius: 50%;
             animation: spin 1s linear infinite;
             margin-bottom: 15px;
@@ -52,7 +52,7 @@
             margin: 0;
         }
 
-        /* --- Header --- */
+        /* --- Header (ปรับให้เหมือนหน้า Index) --- */
         header { 
             background: white; 
             padding: 10px 20px; 
@@ -97,6 +97,7 @@
         /* Form Styles */
         .form-group { margin-bottom: 20px; }
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; } 
+        /* เพิ่มใหม่: รองรับ 3 คอลัมน์สำหรับ ราคา จำนวน หน่วย */
         .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; } 
         
         label { display: block; font-weight: 600; margin-bottom: 8px; color: var(--blue); }
@@ -107,6 +108,7 @@
         .checkbox-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #fafafa; padding: 15px; border: 1px solid #eee; border-radius: 4px; box-sizing: border-box; }
         .checkbox-label { font-weight: normal; color: #333; display: flex; align-items: center; gap: 8px; margin: 0;}
 
+        /* สไตล์สำหรับกล่องหมวดหมู่ย่อยให้ดูแตกต่าง */
         .sub-category-box { background: var(--light-blue); border-color: #b6d4fe; }
         
         button[type="submit"] { background: var(--orange); color: white; border: none; padding: 12px 20px; width: 100%; font-size: 18px; font-weight: bold; border-radius: 4px; cursor: pointer; margin-top: 10px; font-family: 'Prompt', sans-serif; box-sizing: border-box; }
@@ -151,34 +153,64 @@
         .badge-safe { background: #d4edda; color: #155724; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; display: inline-block; white-space: nowrap;}
         .badge-expired { background: var(--red); color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; display: inline-block; white-space: nowrap; animation: blink 1.5s infinite; }
         
+        /* สไตล์ป้ายสำหรับรายการเบิก/รับ */
         .badge-in { background: #d4edda; color: #155724; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
         .badge-out { background: #f8d7da; color: #721c24; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
 
         @keyframes blink { 50% { opacity: 0.6; } }
 
-        /* --- สไตล์สำหรับปุ่มอัปโหลดรูป --- */
+        /* --- สไตล์สำหรับปุ่มอัปโหลดรูป (ภาษาไทย) --- */
         .custom-file-upload {
-            display: flex; align-items: center; gap: 10px; border: 1px solid #ccc; padding: 5px;
-            border-radius: 4px; background: white; box-sizing: border-box; width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border: 1px solid #ccc;
+            padding: 5px;
+            border-radius: 4px;
+            background: white;
+            box-sizing: border-box;
+            width: 100%;
         }
         .btn-choose-file {
-            background: var(--light-blue); color: var(--blue); padding: 6px 12px; border-radius: 4px;
-            cursor: pointer; font-weight: 600; margin: 0 !important; border: 1px solid var(--blue);
-            font-size: 14px; white-space: nowrap; display: inline-block;
+            background: var(--light-blue);
+            color: var(--blue);
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            margin: 0 !important;
+            border: 1px solid var(--blue);
+            font-size: 14px;
+            white-space: nowrap;
+            display: inline-block;
         }
-        .btn-choose-file:hover { background: var(--blue); color: white; }
-        .file-name-text { font-size: 14px; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }
+        .btn-choose-file:hover {
+            background: var(--blue);
+            color: white;
+        }
+        .file-name-text {
+            font-size: 14px;
+            color: #666;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 100%;
+        }
 
-        /* --- สไตล์ของ Tab Menu --- */
-        .tab-menu { display: flex; gap: 10px; max-width: 1000px; margin: 20px auto 0; padding: 0 20px; }
+        /* --- สไตล์ของ Tab Menu (เพิ่มใหม่) --- */
+        .tab-menu {
+            display: flex; gap: 10px; max-width: 1000px; margin: 20px auto 0; padding: 0 20px;
+        }
         .tab-btn {
             background: white; border: 1px solid #ccc; border-bottom: none; padding: 10px 20px;
             font-family: 'Prompt', sans-serif; font-size: 16px; font-weight: bold; color: var(--blue);
             border-radius: 8px 8px 0 0; cursor: pointer; transition: 0.3s;
         }
-        .tab-btn.active { background: var(--orange); color: white; border-color: var(--orange); }
+        .tab-btn.active {
+            background: var(--orange); color: white; border-color: var(--orange);
+        }
 
-        /* --- Modal Popup พื้นฐาน --- */
+        /* --- Modal Popup สำหรับ เบิก/รับ ของ (เพิ่มใหม่) --- */
         .modal-overlay {
             display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; 
             background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center;
@@ -187,25 +219,21 @@
             background-color: white; padding: 30px; border-radius: 12px; width: 90%; max-width: 400px; 
             position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.3); text-align: center;
         }
-        .close-btn { position: absolute; top: 10px; right: 15px; color: #aaa; font-size: 24px; font-weight: bold; cursor: pointer; }
+        .close-btn {
+            position: absolute; top: 10px; right: 15px; color: #aaa; font-size: 24px; font-weight: bold; cursor: pointer;
+        }
         .close-btn:hover { color: #333; }
-        
-        .login-input {
-            width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 6px;
-            font-family: 'Prompt', sans-serif; box-sizing: border-box; text-align: center; font-size: 15px;
-        }
-        .btn-submit-login {
-            background: var(--blue); color: white; border: none; padding: 12px; width: 100%;
-            border-radius: 6px; font-family: 'Prompt', sans-serif; font-weight: bold; cursor: pointer; margin-top: 5px; 
-        }
-        .btn-submit-login:hover { background: var(--dark-blue); }
 
         /* --- แอนิเมชัน Fade Up --- */
         @keyframes fadeUp {
             0% { opacity: 0; transform: translateY(30px); }
             100% { opacity: 1; transform: translateY(0); }
         }
-        .animate-fade-up { opacity: 0; animation: fadeUp 1s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+        
+        .animate-fade-up {
+            opacity: 0;
+            animation: fadeUp 1s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; 
+        }
 
         /* --- MEDIA QUERY สำหรับมือถือ --- */
         @media (max-width: 768px) {
@@ -218,19 +246,27 @@
 
             .container { margin: 15px auto; padding: 0 15px; }
             .card-box { padding: 20px; margin-bottom: 20px; }
+            
             .card-title { font-size: 15px !important; white-space: nowrap; }
 
             .form-row, .form-row-3 { grid-template-columns: 1fr; gap: 15px; } 
+            
             .checkbox-group { grid-template-columns: 1fr 1fr; gap: 10px; }
             
             th, td { padding: 8px 10px; font-size: 14px; }
             .btn-qty { width: 28px; height: 28px; font-size: 14px; }
             .qty-input { width: 45px !important; font-size: 16px !important; }
+            
             .btn-delete { padding: 4px 8px; font-size: 12px; margin-left: 5px;}
             .item-img-preview { width: 40px; height: 40px; }
         }
 
-        .item-checkbox { width: 18px; height: 18px; cursor: pointer; }
+        /* Checkbox สำหรับเลือกลบหลายรายการ */
+        .item-checkbox {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -251,7 +287,7 @@
         </div>
     </header>
 
-    <!-- เมนู Tab -->
+    <!-- เมนู Tab (เพิ่มใหม่) -->
     <div class="tab-menu animate-fade-up">
         <button class="tab-btn active" id="btnTab1" onclick="switchTab('tab1')">📦 จัดการสต็อก</button>
         <button class="tab-btn" id="btnTab2" onclick="switchTab('tab2')">📊 รายงานโปรเจกต์</button>
@@ -282,6 +318,7 @@
                         <input type="text" id="nameInput" required placeholder="เช่น น็อตเกลียวปล่อย, รถกระบะขนส่ง">
                     </div>
 
+                    <!-- แก้ไขให้เป็น form-row-3 และเพิ่มช่องรับราคาต้นทุน -->
                     <div class="form-row-3">
                         <div class="form-group">
                             <label>ราคาต้นทุน (ต่อหน่วย)</label>
@@ -322,7 +359,8 @@
 
                     <div class="form-group" id="subCategoryWrapper" style="display: none;">
                         <label>แท็ก / หมวดย่อย (อิงตามหมวดหลักที่เลือกด้านบน)</label>
-                        <div class="checkbox-group sub-category-box" id="subCategoryGroup"></div>
+                        <div class="checkbox-group sub-category-box" id="subCategoryGroup">
+                            </div>
                     </div>
 
                     <div class="form-group">
@@ -449,23 +487,27 @@
     </div>
 
     <script>
+        // --- เพิ่มใหม่: ล็อกประตู! เช็คสิทธิ์ก่อนเข้าหน้าเว็บ ---
         const userToken = localStorage.getItem('token');
         const userRole = localStorage.getItem('userRole');
         if (!userToken || userRole !== 'admin') {
             alert('คุณไม่มีสิทธิ์เข้าถึงหน้านี้ กรุณาเข้าสู่ระบบในฐานะผู้ดูแลระบบ');
             window.location.href = 'index.html';
         }
+        // -----------------------------------------------------
 
+        // --- โค้ดสำหรับระบบ Loading Screen ปิดตัวเองเมื่อโหลดเสร็จ ---
         window.addEventListener("load", () => {
             setTimeout(() => {
                 const loader = document.getElementById("loader");
                 loader.style.opacity = "0";
                 setTimeout(() => {
                     loader.style.display = "none";
-                }, 500); 
-            }, 800); 
+                }, 500); // รอให้ fade out เสร็จค่อยซ่อน
+            }, 800); // หน่วงเวลาให้เห็นหน้าโหลดอย่างน้อย 0.8 วิ (ปรับช้าเร็วตรงนี้ได้)
         });
 
+        // --- ฟังก์ชันสลับ Tab (เพิ่มใหม่) ---
         function switchTab(tabId) {
             document.getElementById('tab1').style.display = 'none';
             document.getElementById('tab2').style.display = 'none';
@@ -483,9 +525,12 @@
             }
         }
 
+        // --- ฟังก์ชันคำนวณวันนับถอยหลัง ---
         function calculateCountdown(expiryDateStr, categories) {
+            // เช็คก่อนว่าเป็นสินค้าหมวด "ขนส่ง พรบ." ไหม
             const isCTP = categories && categories.some(cat => cat.name === 'ขนส่ง พรบ.' || cat === 'ขนส่ง พรบ.');
             if (!isCTP) return '-'; 
+
             if (!expiryDateStr) return 'ยังไม่ตั้งค่า';
 
             const expiryDate = new Date(expiryDateStr);
@@ -506,6 +551,7 @@
             }
         }
 
+        // --- 0. ข้อมูลหมวดหมู่ย่อย ---
         const subCategoryData = {
             "ติดตั้งบูธ": ["เลเซอร์ระดับน้ำ", "สว่าน", "น็อต", "ตลับเมตร", "นั่งร้าน"],
             "งานเหล็ก": ["น็อต", "เหล็กกล่อง", "เหล็กฉาก", "ใบตัด", "ตู้เชื่อม", "ลวดเชื่อม"],
@@ -521,7 +567,9 @@
         const subCategoryWrapper = document.getElementById('subCategoryWrapper');
         const subCategoryGroup = document.getElementById('subCategoryGroup');
 
-        categoryCheckboxes.forEach(cb => { cb.addEventListener('change', updateSubCategories); });
+        categoryCheckboxes.forEach(cb => {
+            cb.addEventListener('change', updateSubCategories);
+        });
 
         function updateSubCategories() {
             subCategoryGroup.innerHTML = '';
@@ -547,17 +595,22 @@
             subCategoryWrapper.style.display = hasSub ? 'block' : 'none';
         }
 
+        // --- 1. โค้ดส่วนเพิ่มข้อมูล ---
         document.getElementById('addItemForm').addEventListener('submit', async function(e) {
             e.preventDefault(); 
+            
             let selectedCategories = [];
             
-            document.querySelectorAll('input[name="category"]:checked').forEach(cb => selectedCategories.push(cb.value));
-            document.querySelectorAll('input[name="subCategory"]:checked').forEach(cb => selectedCategories.push(cb.value));
+            const mainCheckboxes = document.querySelectorAll('input[name="category"]:checked');
+            mainCheckboxes.forEach((cb) => { selectedCategories.push(cb.value); });
+
+            const subCheckboxes = document.querySelectorAll('input[name="subCategory"]:checked');
+            subCheckboxes.forEach((cb) => { selectedCategories.push(cb.value); });
 
             const formData = new FormData();
             formData.append('name', document.getElementById('nameInput').value);
             formData.append('quantity', document.getElementById('qtyInput').value);
-            formData.append('price', document.getElementById('priceInput').value);
+            formData.append('price', document.getElementById('priceInput').value); // ส่งค่า price ไปด้วย
             formData.append('unit', document.getElementById('unitInput').value);
             formData.append('categories', JSON.stringify(selectedCategories)); 
             
@@ -580,6 +633,7 @@
                     document.getElementById('fileNameDisplay').innerText = 'ยังไม่ได้เลือกไฟล์'; 
                     updateSubCategories(); 
                     setTimeout(() => { document.getElementById('successAlert').style.display = 'none'; }, 3000);
+                    
                     loadAdminItems();
                 } else if (response.status === 401 || response.status === 403) {
                     alert('เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่');
@@ -588,10 +642,12 @@
                     alert('เกิดข้อผิดพลาดในการบันทึก');
                 }
             } catch (error) {
+                console.error(error);
                 alert('ไม่สามารถเชื่อมต่อฐานข้อมูลได้');
             }
         });
 
+        // --- 2. โค้ดส่วนดึงข้อมูลมาแสดงในตาราง ---
         async function loadAdminItems() {
             try {
                 const response = await fetch('/api/items');
@@ -611,7 +667,10 @@
                 items.forEach(item => {
                     const imgSrc = item.imageUrl ? `${item.imageUrl}` : '';
                     const imgTag = imgSrc ? `<img src="${imgSrc}" class="item-img-preview">` : `<div class="item-img-preview" style="display:flex; align-items:center; justify-content:center; font-size:10px; color:#999;">ไม่มีรูป</div>`;
+                    
                     const countdownBadge = calculateCountdown(item.expiryDate, item.categories);
+                    
+                    // แสดงราคาต้นทุนประกอบชื่อ
                     const priceText = item.price > 0 ? `<br><small style="color: #666;">ทุน: ${item.price} บ./${item.unit}</small>` : '';
 
                     // ลบปุ่ม <td>ทำรายการเบิก/รับ</td> ออกไปแล้ว
@@ -642,46 +701,61 @@
             }
         }
 
+        // --- 3. ฟังก์ชันปรับลด/เพิ่มจำนวนสต็อก (แบบ Manual เก่า) ---
         async function updateQty(id, currentQty, change) {
             let newQty = currentQty + change;
             if (newQty < 0) newQty = 0; 
+
             try {
                 const response = await fetch(`/api/items/${id}/stock`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${userToken}` },
                     body: JSON.stringify({ quantity: newQty })
                 });
+
                 if (response.status === 401 || response.status === 403) return window.location.href = 'index.html';
                 loadAdminItems(); 
-            } catch (error) { alert('เกิดข้อผิดพลาดในการอัปเดตจำนวน'); }
+            } catch (error) {
+                alert('เกิดข้อผิดพลาดในการอัปเดตจำนวน');
+            }
         }
 
         async function updateQtyDirect(id, newValue) {
             let newQty = parseInt(newValue);
             if (isNaN(newQty) || newQty < 0) newQty = 0; 
+
             try {
                 const response = await fetch(`/api/items/${id}/stock`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${userToken}` },
                     body: JSON.stringify({ quantity: newQty })
                 });
+
                 if (response.status === 401 || response.status === 403) return window.location.href = 'index.html';
                 loadAdminItems(); 
-            } catch (error) { alert('เกิดข้อผิดพลาดในการอัปเดตจำนวน'); }
+            } catch (error) {
+                alert('เกิดข้อผิดพลาดในการอัปเดตจำนวน');
+            }
         }
 
+        // --- 4. ฟังก์ชันลบสินค้า (เดี่ยว) ---
         async function deleteItem(id) {
             if(!confirm("คุณต้องการลบสินค้านี้ออกจากสต็อกถาวร ใช่หรือไม่?")) return;
+
             try {
                 const response = await fetch(`/api/items/${id}`, {
                     method: 'DELETE',
                     headers: { 'Authorization': `Bearer ${userToken}` }
                 });
+
                 if (response.status === 401 || response.status === 403) return window.location.href = 'index.html';
                 loadAdminItems(); 
-            } catch (error) { alert('เกิดข้อผิดพลาดในการลบข้อมูล'); }
+            } catch (error) {
+                alert('เกิดข้อผิดพลาดในการลบข้อมูล');
+            }
         }
 
+        // --- 5. ฟังก์ชันสำหรับลบหลายรายการ ---
         function toggleSelectAll(source) {
             const checkboxes = document.querySelectorAll('.single-cb');
             checkboxes.forEach(cb => cb.checked = source.checked);
@@ -692,6 +766,7 @@
             const selected = document.querySelectorAll('.single-cb:checked');
             const btn = document.getElementById('btnBulkDelete');
             const countSpan = document.getElementById('selectedCount');
+            
             if (selected.length > 0) {
                 btn.style.display = 'inline-block';
                 countSpan.innerText = selected.length;
@@ -703,8 +778,10 @@
         async function bulkDeleteItems() {
             const selected = document.querySelectorAll('.single-cb:checked');
             if (selected.length === 0) return;
+            
             if(!confirm(`คุณต้องการลบสินค้าที่เลือกจำนวน ${selected.length} รายการ ใช่หรือไม่?\n(การลบนี้จะไม่สามารถกู้คืนได้)`)) return;
             const idsToDelete = Array.from(selected).map(cb => cb.value);
+            
             try {
                 for (const id of idsToDelete) {
                     await fetch(`/api/items/${id}`, {
@@ -713,7 +790,9 @@
                     });
                 }
                 loadAdminItems(); 
-            } catch (error) { alert('เกิดข้อผิดพลาดในการลบข้อมูลบางรายการ'); }
+            } catch (error) {
+                alert('เกิดข้อผิดพลาดในการลบข้อมูลบางรายการ');
+            }
         }
 
         // ==============================================
@@ -774,20 +853,29 @@
                         const projTrans = globalTransactions.filter(t => t.projectId === proj.id && t.type === 'OUT');
                         const totalCost = projTrans.reduce((sum, t) => sum + t.totalCost, 0); // รวมเงิน
                         
+                        // เช็คสถานะโปรเจกต์ เพื่อโชว์ปุ่มปิดจ็อบ หรือ ป้ายปิดจ็อบแล้ว
+                        let actionHtml = `<button onclick="openProjectDetails(${proj.id})" style="background: var(--blue); color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-family: 'Prompt'; font-size: 13px; margin-right: 5px;">ดูรายละเอียด</button>`;
+                        
+                        if (proj.status === 'ACTIVE') {
+                            actionHtml += `<button onclick="closeProject(${proj.id}, '${proj.name}')" style="background: #28a745; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-family: 'Prompt'; font-size: 13px;">✅ ปิดจ็อบ (ส่งเข้า Sheet)</button>`;
+                        } else {
+                            actionHtml += `<span style="background: #6c757d; color: white; padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: bold;">🔒 ปิดจ็อบแล้ว</span>`;
+                        }
+
                         tbodyProj.innerHTML += `
                             <tr>
                                 <td style="font-weight: bold; color: var(--blue); font-size: 15px;">${proj.name}</td>
                                 <td>${projTrans.length} รายการ</td>
                                 <td style="color: var(--red); font-weight: bold; font-size: 15px;">${totalCost.toLocaleString()}</td>
                                 <td>
-                                    <button onclick="openProjectDetails(${proj.id})" style="background: var(--blue); color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-family: 'Prompt'; font-size: 13px;">ดูรายละเอียด</button>
+                                    ${actionHtml}
                                 </td>
                             </tr>
                         `;
                     });
                 }
 
-                // 2. วาดตารางประวัติทั้งหมด (โค้ดเดิมด้านล่างสุด)
+                // 2. วาดตารางประวัติทั้งหมด
                 tbodyLog.innerHTML = '';
                 if(globalTransactions.length === 0) {
                     tbodyLog.innerHTML = '<tr><td colspan="7" style="text-align:center;">ยังไม่มีประวัติการเบิกหรือรับของ</td></tr>';
@@ -861,6 +949,28 @@
 
         function closeProjectModal() {
             document.getElementById('projectDetailsModal').style.display = 'none';
+        }
+
+        // ฟังก์ชันสำหรับปิดโปรเจกต์และส่งเข้า Google Sheet
+        async function closeProject(projectId, projectName) {
+            if(!confirm(`คุณต้องการปิดโปรเจกต์ "${projectName}" ใช่หรือไม่?\n\n(เมื่อกดยืนยัน ระบบจะสรุปยอดส่งเข้า Google Sheet ทันที และพนักงานจะไม่สามารถเบิกของเข้างบงานนี้ได้อีก)`)) return;
+
+            try {
+                const response = await fetch(`/api/projects/${projectId}/close`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${userToken}` }
+                });
+
+                const data = await response.json();
+                if(response.ok) {
+                    alert(data.message || "ปิดจ็อบและส่งข้อมูลเข้า Google Sheet สำเร็จ!");
+                    loadTransactionsAndProjects(); // โหลดตารางใหม่เพื่ออัปเดตสถานะ
+                } else {
+                    alert("เกิดข้อผิดพลาด: " + data.error);
+                }
+            } catch (error) {
+                alert("ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้");
+            }
         }
 
         // ทำงานเริ่มต้น
